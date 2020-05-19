@@ -2,7 +2,7 @@ FROM debian:buster
 
 LABEL org.label-schema.license="GPL-2.0" \
       org.label-schema.vcs-url="https://github.com/data-intuitive/randpy" \
-      org.label-schema.vendor="R and Python in one container" \
+      org.label-schema.vendor="randpy: R and Python in one container" \
       maintainer="Robrecht Cannoodt <robrecht@data-intuitive.com>"
 
 ARG BUILD_DATE
