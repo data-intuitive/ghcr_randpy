@@ -17,6 +17,7 @@ jobs:
     name: randy_r${{ matrix.config.r }}_py${{ matrix.config.python }}
 
     strategy:
+      fail-fast: false
       matrix:
         config:
           - {r: '3.6.3', python: '3.6.11'}

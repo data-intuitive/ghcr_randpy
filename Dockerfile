@@ -128,7 +128,7 @@ RUN apt-get update \
     libjpeg62-turbo \
     libopenblas-dev \
     libpangocairo-1.0-0 \
-    libpcre3 \
+    libpcre3-dev \
     libpng16-16 \
     libreadline7 \
     libtiff5 \
