@@ -1,6 +1,6 @@
 FROM debian:buster
 
-LABEL org.label-schema.license="GPL-2.0" \
+LABEL org.label-schema.license="MIT" \
       org.label-schema.vcs-url="https://github.com/data-intuitive/randpy" \
       org.label-schema.vendor="randpy: R and Python in one container" \
       maintainer="Robrecht Cannoodt <robrecht@data-intuitive.com>"
@@ -26,7 +26,7 @@ ENV BUILD_DATE=${BUILD_DATE:-2020-05-17} \
     R_VERSION=${R_VERSION:-3.6.3} \
     CRAN=${CRAN:-https://cran.rstudio.com} \
     PYTHON_VERSION=${PYTHON_VERSION:-3.8.3} \
-    PYTHON_PIP_VERSION=${PYTHON_PIP_VERSION:-20.1} \
+    PYTHON_PIP_VERSION=${PYTHON_PIP_VERSION:-20.1.1} \
     CRAN_REPO=${CTAN_REPO:-https://www.texlive.info/tlnet-archive/2019/02/27/tlnet}
 
 #------------------------------------------
@@ -128,7 +128,7 @@ RUN apt-get update \
     libjpeg62-turbo \
     libopenblas-dev \
     libpangocairo-1.0-0 \
-    libpcre3-dev \
+    libpcre3 \
     libpng16-16 \
     libreadline7 \
     libtiff5 \
@@ -149,6 +149,7 @@ RUN apt-get update \
     libpango1.0-dev \
     libjpeg-dev \
     libicu-dev \
+    libpcre2-dev \
     libpcre3-dev \
     libpng-dev \
     libreadline-dev \
@@ -386,8 +387,8 @@ RUN cd /usr/local/bin \
 	&& ln -s python3-config python-config
 
 # https://github.com/pypa/get-pip
-ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/1fe530e9e3d800be94e04f6428460fc4fb94f5a9/get-pip.py
-ENV PYTHON_GET_PIP_SHA256 ce486cddac44e99496a702aa5c06c5028414ef48fdfd5242cd2fe559b13d4348
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/eff16c878c7fd6b688b9b4c4267695cf1a0bf01b/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 b3153ec0cf7b7bbf9556932aa37e4981c35dc2a2c501d70d91d2795aa532be79
 
 RUN set -ex; \
 	\
