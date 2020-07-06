@@ -17,43 +17,37 @@ jobs:
     name: randpy_r${{ matrix.config.r }}_py${{ matrix.config.python }}
 
     env:
-      R_LATEST: 4.0.2
-      PY_LATEST: 3.8.3
+      R_LATEST: 4.0
+      PY_LATEST: 3.8
+      REPO: dataintuitive/randpy
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: 'buster', r: '3.6.3', python: '3.6.11'}
-          - {os: 'buster', r: '3.6.3', python: '3.7.8'}
-          - {os: 'buster', r: '3.6.3', python: '3.8.3'}
-          - {os: 'buster', r: '4.0.2', python: '3.6.11'}
-          - {os: 'buster', r: '4.0.2', python: '3.7.8'}
-          - {os: 'buster', r: '4.0.2', python: '3.8.3'}
+          - {os: 'buster', r: '3.6', python: '3.6'}
+          - {os: 'buster', r: '3.6', python: '3.7'}
+          - {os: 'buster', r: '3.6', python: '3.8'}
+          - {os: 'buster', r: '4.0', python: '3.6'}
+          - {os: 'buster', r: '4.0', python: '3.7'}
+          - {os: 'buster', r: '4.0', python: '3.8'}
 
     steps:
       - uses: actions/checkout@v2
 
       - name: build
         run: |
-          TAG="${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}"
+          TAG="r${{ matrix.config.r }}_py${{ matrix.config.python }}"
           DOCKERFILE="dockerfiles/$TAG.Dockerfile"
-          docker build --build-arg GITHUB_PAT=${{ secrets.PAT }} -t "$GITHUB_REPOSITORY:$TAG" -f "$DOCKERFILE" .
-          if "${{ matrix.config.r }}" == $R_LATEST; then
-            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_rlatest_py${{ matrix.config.python }}"
-          fi
-          if "${{ matrix.config.py }}" == $PY_LATEST; then
-            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_r${{matrix.config.r}}_pylatest"
-          fi
+          docker build --build-arg GITHUB_PAT=${{ secrets.PAT }} -t "$REPO:$TAG" -f "$DOCKERFILE" .
           if [ "${{ matrix.config.r }}" == $R_LATEST ] && [ "${{ matrix.config.py }}" == $PY_LATEST ]] ; then
-            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_rlatest_pylatest"
-            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:latest"
+            docker tag "$REPO:$TAG" "$REPO:latest"
           fi
 
       - name: push
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker push $GITHUB_REPOSITORY
+          docker push $REPO
 
 #      - uses: docker/build-push-action@v1
 #        with:
