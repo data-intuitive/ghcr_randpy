@@ -39,13 +39,13 @@ jobs:
           TAG="${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}"
           DOCKERFILE="dockerfiles/$TAG.Dockerfile"
           docker build --build-arg GITHUB_PAT=${{ secrets.PAT }} -t "$GITHUB_REPOSITORY:$TAG" -f "$DOCKERFILE" .
-          if "${{ os.config.r }}" == $R_LATEST; then
+          if "${{ matrix.config.r }}" == $R_LATEST; then
             docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_rlatest_py${{ matrix.config.python }}"
           fi
-          if "${{ os.config.py }}" == $PY_LATEST; then
+          if "${{ matrix.config.py }}" == $PY_LATEST; then
             docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_r${{matrix.config.r}}_pylatest"
           fi
-          if [ "${{ os.config.r }}" == $R_LATEST ] && [ "${{ os.config.py }}" == $PY_LATEST ]] ; then
+          if [ "${{ matrix.config.r }}" == $R_LATEST ] && [ "${{ matrix.config.py }}" == $PY_LATEST ]] ; then
             docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_rlatest_pylatest"
             docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:latest"
           fi
