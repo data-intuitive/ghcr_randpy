@@ -5,7 +5,7 @@ fol_r=src/2_r
 fol_py=src/3_python
 for os in buster; do
   for r in 3.6 4.0; do
-    for py in 3.6 3.7 3.8; do
+    for py in 2.7 3.6 3.7 3.8; do
       out=dockerfiles/r${r}_py${py}.Dockerfile
       cat $fol_os/$os/Dockerfile > $out
       echo >> $out

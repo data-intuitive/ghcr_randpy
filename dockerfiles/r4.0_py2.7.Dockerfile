@@ -114,8 +114,8 @@ RUN set -ex; \
 ARG R_VERSION
 ARG BUILD_DATE
 ARG CRAN
-ENV BUILD_DATE ${BUILD_DATE:-2020-04-24}
-ENV R_VERSION=${R_VERSION:-3.6.3} \
+ENV BUILD_DATE ${BUILD_DATE:-2020-07-01}
+ENV R_VERSION=${R_VERSION:-4.0.2} \
     CRAN=${CRAN:-https://cran.rstudio.com} \ 
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
@@ -138,9 +138,13 @@ RUN apt-get update \
     libjpeg62-turbo \
     libopenblas-dev \
     libpangocairo-1.0-0 \
+    libpcre2-8-0 \
     libpcre3 \
+    libpcre2-dev \
+    libpcre3-dev \
     libpng16-16 \
     libreadline7 \
+    libssl-dev \
     libtiff5 \
     liblzma5 \
     locales \
@@ -158,7 +162,6 @@ RUN apt-get update \
     libpango1.0-dev \
     libjpeg-dev \
     libicu-dev \
-    libpcre3-dev \
     libpng-dev \
     libreadline-dev \
     libtiff5-dev \
@@ -226,7 +229,6 @@ RUN apt-get update \
   && Rscript -e "install.packages(c('littler', 'docopt'), repo = '$CRAN')" \
   && ln -s /usr/local/lib/R/site-library/littler/examples/install2.r /usr/local/bin/install2.r \
   && ln -s /usr/local/lib/R/site-library/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
-  && ln -s /usr/local/lib/R/site-library/littler/examples/installBioc.r /usr/local/bin/installBioc.r \
   && ln -s /usr/local/lib/R/site-library/littler/bin/r /usr/local/bin/r \
   ## Clean up from R source install
   && cd / \
@@ -236,7 +238,7 @@ RUN apt-get update \
   && apt-get autoclean -y \
   && rm -rf /var/lib/apt/lists/*
 
-## PART 2: https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/3.6.3.Dockerfile
+## PART 2: https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/4.0.2.Dockerfile
 RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   libxml2-dev \
   libcairo2-dev \
@@ -259,7 +261,7 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   && install2.r --error \
     BiocManager
 
-## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/3.6.3.Dockerfile
+## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/4.0.2.Dockerfile
 # Version-stable CTAN repo from the tlnet archive at texlive.info, used in the
 # TinyTeX installation: chosen as the frozen snapshot of the TeXLive release
 # shipped for the base Debian image of a given rocker/r-ver tag.
@@ -270,10 +272,7 @@ ENV CTAN_REPO=${CTAN_REPO}
 ENV PATH=$PATH:/opt/TinyTeX/bin/x86_64-linux/
 
 ## Add LaTeX, rticles and bookdown support
-RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
-  && dpkg -i texlive-local.deb \
-  && rm texlive-local.deb \
-  && apt-get update \
+RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     curl \
     default-jdk \
@@ -295,6 +294,10 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
     ssh \
     texinfo \
     vim \
+    wget \
+  && wget "https://travis-bin.yihui.name/texlive-local.deb" \
+  && dpkg -i texlive-local.deb \
+  && rm texlive-local.deb \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   ## Use tinytex for LaTeX installation
@@ -327,29 +330,22 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
   && install2.r --error --deps TRUE \
     bookdown rticles rmdshower rJava
 
-#------------------------------------------
-# INSTALL Python
-# Interpreted from python:3.6
-# https://github.com/docker-library/python/blob/master/3.6/buster/Dockerfile
-#------------------------------------------
-
-## PART 1: https://github.com/docker-library/python/blob/master/3.6/buster/Dockerfile
-
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
 
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
+# https://github.com/docker-library/python/issues/147
+ENV PYTHONIOENCODING UTF-8
 
 # extra dependencies (over what buildpack-deps already includes)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		libbluetooth-dev \
 		tk-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.6.11
+ENV GPG_KEY C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF
+ENV PYTHON_VERSION 2.7.17
 
 RUN set -ex \
 	\
@@ -368,13 +364,10 @@ RUN set -ex \
 	&& gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
 	&& ./configure \
 		--build="$gnuArch" \
-		--enable-loadable-sqlite-extensions \
 		--enable-optimizations \
 		--enable-option-checking=fatal \
 		--enable-shared \
-		--with-system-expat \
-		--with-system-ffi \
-		--without-ensurepip \
+		--enable-unicode=ucs4 \
 	&& make -j "$(nproc)" \
 # setting PROFILE_TASK makes "--enable-optimizations" reasonable: https://bugs.python.org/issue36044 / https://github.com/docker-library/python/issues/160#issuecomment-509426916
 		PROFILE_TASK='-m test.regrtest --pgo \
@@ -423,20 +416,13 @@ RUN set -ex \
 		\) -exec rm -rf '{}' + \
 	&& rm -rf /usr/src/python \
 	\
-	&& python3 --version
-
-# make some useful symlinks that are expected to exist
-RUN cd /usr/local/bin \
-	&& ln -s idle3 idle \
-	&& ln -s pydoc3 pydoc \
-	&& ln -s python3 python \
-	&& ln -s python3-config python-config
+	&& python2 --version
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 20.1.1
+ENV PYTHON_PIP_VERSION 20.0.2
 # https://github.com/pypa/get-pip
-ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/eff16c878c7fd6b688b9b4c4267695cf1a0bf01b/get-pip.py
-ENV PYTHON_GET_PIP_SHA256 b3153ec0cf7b7bbf9556932aa37e4981c35dc2a2c501d70d91d2795aa532be79
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/d59197a3c169cef378a22428a3fa99d33e080a5d/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 421ac1d44c0cf9730a088e337867d974b91bdce4ea2636099275071878cc189e
 
 RUN set -ex; \
 	\
@@ -457,3 +443,6 @@ RUN set -ex; \
 			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
+
+# install "virtualenv", since the vast majority of users of this image will want it
+RUN pip install --no-cache-dir virtualenv
