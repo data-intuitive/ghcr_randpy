@@ -20,12 +20,12 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {r: '3.6.3', python: '3.6.11'}
-          - {r: '3.6.3', python: '3.7.8'}
-          - {r: '3.6.3', python: '3.8.3'}
-          - {r: '4.0.2', python: '3.6.11'}
-          - {r: '4.0.2', python: '3.7.8'}
-          - {r: '4.0.2', python: '3.8.3'}
+          - {os: 'buster', r: '3.6.3', python: '3.6.11', latest: ''}
+          - {os: 'buster', r: '3.6.3', python: '3.7.8', latest: ''}
+          - {os: 'buster', r: '3.6.3', python: '3.8.3', latest: ''}
+          - {os: 'buster', r: '4.0.2', python: '3.6.11', latest: ''}
+          - {os: 'buster', r: '4.0.2', python: '3.7.8', latest: ''}
+          - {os: 'buster', r: '4.0.2', python: '3.8.3', latest: ', latest'}
 
     steps:
       - uses: actions/checkout@v2
@@ -34,6 +34,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          build_args: R_VERSION=${{ matrix.config.r }},PYTHON_VERSION=${{ matrix.config.python }},GITHUB_PAT=${{ secrets.PAT }}
+          build_args: GITHUB_PAT=${{ secrets.PAT }}
           repository: dataintuitive/randpy
-          tags: r${{ matrix.config.r }}_py${{ matrix.config.python }}
+          tags: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}${{ matrix.config.latest }}
+          dockerfile: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}.Dockerfile
