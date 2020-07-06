@@ -102,6 +102,7 @@ RUN set -ex; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+
 #------------------------------------------
 # INSTALL R
 # Interpreted from rocker/r-ver:3.6.3
@@ -225,6 +226,7 @@ RUN apt-get update \
   && Rscript -e "install.packages(c('littler', 'docopt'), repo = '$CRAN')" \
   && ln -s /usr/local/lib/R/site-library/littler/examples/install2.r /usr/local/bin/install2.r \
   && ln -s /usr/local/lib/R/site-library/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
+  && ln -s /usr/local/lib/R/site-library/littler/examples/installBioc.r /usr/local/bin/installBioc.r \
   && ln -s /usr/local/lib/R/site-library/littler/bin/r /usr/local/bin/r \
   ## Clean up from R source install
   && cd / \
@@ -324,6 +326,7 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
   ## And some nice R packages for publishing-related stuff
   && install2.r --error --deps TRUE \
     bookdown rticles rmdshower rJava
+
 #------------------------------------------
 # INSTALL Python
 # Interpreted from python:3.6

@@ -121,6 +121,7 @@ RUN apt-get update \
   && Rscript -e "install.packages(c('littler', 'docopt'), repo = '$CRAN')" \
   && ln -s /usr/local/lib/R/site-library/littler/examples/install2.r /usr/local/bin/install2.r \
   && ln -s /usr/local/lib/R/site-library/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
+  && ln -s /usr/local/lib/R/site-library/littler/examples/installBioc.r /usr/local/bin/installBioc.r \
   && ln -s /usr/local/lib/R/site-library/littler/bin/r /usr/local/bin/r \
   ## Clean up from R source install
   && cd / \

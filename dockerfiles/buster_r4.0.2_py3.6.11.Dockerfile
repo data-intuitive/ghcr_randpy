@@ -102,6 +102,7 @@ RUN set -ex; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+
 #------------------------------------------
 # INSTALL R
 # Interpreted from rocker/r-ver:3.6.3
@@ -328,6 +329,7 @@ RUN apt-get update \
   ## And some nice R packages for publishing-related stuff
   && install2.r --error --deps TRUE \
     bookdown rticles rmdshower rJava
+
 #------------------------------------------
 # INSTALL Python
 # Interpreted from python:3.6
