@@ -16,25 +16,50 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     name: randpy_r${{ matrix.config.r }}_py${{ matrix.config.python }}
 
+    env:
+      R_LATEST: 4.0.2
+      PY_LATEST: 3.8.3
+
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: 'buster', r: '3.6.3', python: '3.6.11', latest: ''}
-          - {os: 'buster', r: '3.6.3', python: '3.7.8', latest: ''}
-          - {os: 'buster', r: '3.6.3', python: '3.8.3', latest: ''}
-          - {os: 'buster', r: '4.0.2', python: '3.6.11', latest: ''}
-          - {os: 'buster', r: '4.0.2', python: '3.7.8', latest: ''}
-          - {os: 'buster', r: '4.0.2', python: '3.8.3', latest: ', latest'}
+          - {os: 'buster', r: '3.6.3', python: '3.6.11'}
+          - {os: 'buster', r: '3.6.3', python: '3.7.8'}
+          - {os: 'buster', r: '3.6.3', python: '3.8.3'}
+          - {os: 'buster', r: '4.0.2', python: '3.6.11'}
+          - {os: 'buster', r: '4.0.2', python: '3.7.8'}
+          - {os: 'buster', r: '4.0.2', python: '3.8.3'}
 
     steps:
       - uses: actions/checkout@v2
 
-      - uses: docker/build-push-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          build_args: GITHUB_PAT=${{ secrets.PAT }}
-          repository: dataintuitive/randpy
-          tags: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}${{ matrix.config.latest }}
-          dockerfile: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}.Dockerfile
+      - name: build
+        run: |
+          TAG="${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}"
+          DOCKERFILE="dockerfiles/$TAG.Dockerfile"
+          docker build --build-arg GITHUB_PAT=${{ secrets.PAT }} -t "$GITHUB_REPOSITORY:$TAG" -f "$DOCKERFILE" .
+          if "${{ os.config.r }}" == $R_LATEST; then
+            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_rlatest_py${{ matrix.config.python }}"
+          fi
+          if "${{ os.config.py }}" == $PY_LATEST; then
+            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_r${{matrix.config.r}}_pylatest"
+          fi
+          if [ "${{ os.config.r }}" == $R_LATEST ] && [ "${{ os.config.py }}" == $PY_LATEST ]] ; then
+            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:${{ matrix.config.os }}_rlatest_pylatest"
+            docker tag "$GITHUB_REPOSITORY:$TAG" "$GITHUB_REPOSITORY:latest"
+          fi
+
+      - name: push
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push $GITHUB_REPOSITORY
+
+#      - uses: docker/build-push-action@v1
+#        with:
+#          username: ${{ secrets.DOCKER_USERNAME }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#          build_args: GITHUB_PAT=${{ secrets.PAT }}
+#          repository: dataintuitive/randpy
+#          tags: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}${{ matrix.config.latest }}
+#          dockerfile: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}.Dockerfile
