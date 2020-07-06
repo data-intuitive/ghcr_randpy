@@ -150,6 +150,8 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
     remotes \
     selectr \
     caTools \
+  && install2.r --error \
+    --deps TRUE \
     BiocManager
 
 ## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/3.6.3.Dockerfile
