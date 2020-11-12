@@ -104,60 +104,12 @@ RUN set -ex; \
 
 
 #------------------------------------------
-# INSTALL R
-# Interpreted from rocker/r-ver:4.0
-# https://github.com/rocker-org/rocker-versioned2/tree/master/dockerfiles
-#------------------------------------------
-
-# PART 1: install scripts
-RUN cd / && \
-  wget https://github.com/rocker-org/rocker-versioned2/archive/master.zip && \
-  unzip master.zip && \
-  mv /rocker-versioned2-master/scripts /rocker_scripts && \
-  rm -r master.zip /rocker-versioned2-master
-  
-## PART 2: install R
-RUN apt-get install -y libreadline-dev
-
-ENV BUILD_DATE=2020-11-12 \
-    R_VERSION=4.0.3 \
-    CRAN="https://cran.rstudio.com" \ 
-    LC_ALL=en_US.UTF-8 \
-    LANG=en_US.UTF-8 \
-    TERM=xterm \
-    R_HOME=/usr/local/lib/R \
-    TZ=Etc/UTC
-    
-RUN /rocker_scripts/install_R.sh
-  
-
-## PART 3: install pandoc & rstudio
-ENV S6_VERSION=v1.21.7.0 \
-    RSTUDIO_VERSION=latest \
-    PATH=/usr/lib/rstudio-server/bin:$PATH
-
-RUN /rocker_scripts/install_rstudio.sh
-RUN /rocker_scripts/install_pandoc.sh
-
-EXPOSE 8787
-
-## PART 4: install tidyverse
-RUN /rocker_scripts/install_tidyverse.sh
-
-## PART 5: install verse
-ENV CTAN_REPO=http://mirror.ctan.org/systems/texlive/tlnet \
-    PATH=/usr/local/texlive/bin/x86_64-linux:$PATH
-
-RUN /rocker_scripts/install_verse.sh
-
-
-#------------------------------------------
 # INSTALL Python
-# Interpreted from python:3.7
-# https://github.com/docker-library/python/blob/master/3.7/buster/Dockerfile
+# Interpreted from python:3.9
+# https://github.com/docker-library/python/blob/master/3.9/buster/Dockerfile
 #------------------------------------------
 
-## PART 1: https://github.com/docker-library/python/blob/master/3.7/buster/Dockerfile
+## PART 1: https://github.com/docker-library/python/blob/master/3.9/buster/Dockerfile
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
@@ -173,8 +125,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		uuid-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.7.9
+ENV GPG_KEY E3FF2839C048B25C084DEBE9B26995E310250568
+ENV PYTHON_VERSION 3.9.0
 
 RUN set -ex \
 	\
@@ -201,42 +153,6 @@ RUN set -ex \
 		--with-system-ffi \
 		--without-ensurepip \
 	&& make -j "$(nproc)" \
-# setting PROFILE_TASK makes "--enable-optimizations" reasonable: https://bugs.python.org/issue36044 / https://github.com/docker-library/python/issues/160#issuecomment-509426916
-		PROFILE_TASK='-m test.regrtest --pgo \
-			test_array \
-			test_base64 \
-			test_binascii \
-			test_binhex \
-			test_binop \
-			test_bytes \
-			test_c_locale_coercion \
-			test_class \
-			test_cmath \
-			test_codecs \
-			test_compile \
-			test_complex \
-			test_csv \
-			test_decimal \
-			test_dict \
-			test_float \
-			test_fstring \
-			test_hashlib \
-			test_io \
-			test_iter \
-			test_json \
-			test_long \
-			test_math \
-			test_memoryview \
-			test_pickle \
-			test_re \
-			test_set \
-			test_slice \
-			test_struct \
-			test_threading \
-			test_time \
-			test_traceback \
-			test_unicode \
-		' \
 	&& make install \
 	&& rm -rf /usr/src/python \
 	\
@@ -244,7 +160,6 @@ RUN set -ex \
 		\( \
 			\( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
 			-o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name '*.a' \) \) \
-			-o \( -type f -a -name 'wininst-*.exe' \) \
 		\) -exec rm -rf '{}' + \
 	\
 	&& ldconfig \
@@ -283,3 +198,4 @@ RUN set -ex; \
 			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
+

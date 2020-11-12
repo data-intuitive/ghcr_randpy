@@ -103,78 +103,22 @@ RUN set -ex; \
 	rm -rf /var/lib/apt/lists/*
 
 
-#------------------------------------------
-# INSTALL R
-# Interpreted from rocker/r-ver:4.0
-# https://github.com/rocker-org/rocker-versioned2/tree/master/dockerfiles
-#------------------------------------------
-
-# PART 1: install scripts
-RUN cd / && \
-  wget https://github.com/rocker-org/rocker-versioned2/archive/master.zip && \
-  unzip master.zip && \
-  mv /rocker-versioned2-master/scripts /rocker_scripts && \
-  rm -r master.zip /rocker-versioned2-master
-  
-## PART 2: install R
-RUN apt-get install -y libreadline-dev
-
-ENV BUILD_DATE=2020-11-12 \
-    R_VERSION=4.0.3 \
-    CRAN="https://cran.rstudio.com" \ 
-    LC_ALL=en_US.UTF-8 \
-    LANG=en_US.UTF-8 \
-    TERM=xterm \
-    R_HOME=/usr/local/lib/R \
-    TZ=Etc/UTC
-    
-RUN /rocker_scripts/install_R.sh
-  
-
-## PART 3: install pandoc & rstudio
-ENV S6_VERSION=v1.21.7.0 \
-    RSTUDIO_VERSION=latest \
-    PATH=/usr/lib/rstudio-server/bin:$PATH
-
-RUN /rocker_scripts/install_rstudio.sh
-RUN /rocker_scripts/install_pandoc.sh
-
-EXPOSE 8787
-
-## PART 4: install tidyverse
-RUN /rocker_scripts/install_tidyverse.sh
-
-## PART 5: install verse
-ENV CTAN_REPO=http://mirror.ctan.org/systems/texlive/tlnet \
-    PATH=/usr/local/texlive/bin/x86_64-linux:$PATH
-
-RUN /rocker_scripts/install_verse.sh
-
-
-#------------------------------------------
-# INSTALL Python
-# Interpreted from python:3.7
-# https://github.com/docker-library/python/blob/master/3.7/buster/Dockerfile
-#------------------------------------------
-
-## PART 1: https://github.com/docker-library/python/blob/master/3.7/buster/Dockerfile
-
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
 
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
+# https://github.com/docker-library/python/issues/147
+ENV PYTHONIOENCODING UTF-8
 
 # extra dependencies (over what buildpack-deps already includes)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		libbluetooth-dev \
 		tk-dev \
-		uuid-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.7.9
+ENV GPG_KEY C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF
+ENV PYTHON_VERSION 2.7.17
 
 RUN set -ex \
 	\
@@ -193,13 +137,10 @@ RUN set -ex \
 	&& gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
 	&& ./configure \
 		--build="$gnuArch" \
-		--enable-loadable-sqlite-extensions \
 		--enable-optimizations \
 		--enable-option-checking=fatal \
 		--enable-shared \
-		--with-system-expat \
-		--with-system-ffi \
-		--without-ensurepip \
+		--enable-unicode=ucs4 \
 	&& make -j "$(nproc)" \
 # setting PROFILE_TASK makes "--enable-optimizations" reasonable: https://bugs.python.org/issue36044 / https://github.com/docker-library/python/issues/160#issuecomment-509426916
 		PROFILE_TASK='-m test.regrtest --pgo \
@@ -238,31 +179,23 @@ RUN set -ex \
 			test_unicode \
 		' \
 	&& make install \
-	&& rm -rf /usr/src/python \
+	&& ldconfig \
 	\
 	&& find /usr/local -depth \
 		\( \
 			\( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
-			-o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name '*.a' \) \) \
-			-o \( -type f -a -name 'wininst-*.exe' \) \
+			-o \
+			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
 		\) -exec rm -rf '{}' + \
+	&& rm -rf /usr/src/python \
 	\
-	&& ldconfig \
-	\
-	&& python3 --version
-
-# make some useful symlinks that are expected to exist
-RUN cd /usr/local/bin \
-	&& ln -s idle3 idle \
-	&& ln -s pydoc3 pydoc \
-	&& ln -s python3 python \
-	&& ln -s python3-config python-config
+	&& python2 --version
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 20.2.4
+ENV PYTHON_PIP_VERSION 20.0.2
 # https://github.com/pypa/get-pip
-ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/fa7dc83944936bf09a0e4cb5d5ec852c0d256599/get-pip.py
-ENV PYTHON_GET_PIP_SHA256 6e0bb0a2c2533361d7f297ed547237caf1b7507f197835974c0dd7eba998c53c
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/d59197a3c169cef378a22428a3fa99d33e080a5d/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 421ac1d44c0cf9730a088e337867d974b91bdce4ea2636099275071878cc189e
 
 RUN set -ex; \
 	\
@@ -283,3 +216,6 @@ RUN set -ex; \
 			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
+
+# install "virtualenv", since the vast majority of users of this image will want it
+RUN pip install --no-cache-dir virtualenv
