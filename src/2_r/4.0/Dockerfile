@@ -12,8 +12,6 @@ RUN cd / && \
   rm -r master.zip /rocker-versioned2-master
   
 ## PART 2: install R
-RUN apt-get install -y libreadline-dev
-
 ENV BUILD_DATE=2020-11-12 \
     R_VERSION=4.0.3 \
     CRAN="https://cran.rstudio.com" \ 
@@ -21,7 +19,8 @@ ENV BUILD_DATE=2020-11-12 \
     LANG=en_US.UTF-8 \
     TERM=xterm \
     R_HOME=/usr/local/lib/R \
-    TZ=Etc/UTC
+    TZ=Etc/UTC \
+    UBUNTU_VERSION=bionic
     
 RUN /rocker_scripts/install_R.sh
   
