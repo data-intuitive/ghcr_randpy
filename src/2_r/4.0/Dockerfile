@@ -19,11 +19,9 @@ ENV BUILD_DATE=2020-11-12 \
     LANG=en_US.UTF-8 \
     TERM=xterm \
     R_HOME=/usr/local/lib/R \
-    TZ=Etc/UTC \
-    UBUNTU_VERSION=bionic
+    TZ=Etc/UTC
     
-RUN /rocker_scripts/install_R.sh
-  
+RUN UBUNTU_VERSION=bionic /rocker_scripts/install_R.sh
 
 ## PART 3: install pandoc & rstudio
 ENV S6_VERSION=v1.21.7.0 \
