@@ -102,6 +102,7 @@ RUN set -ex; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+
 #------------------------------------------
 # INSTALL R
 # Interpreted from rocker/r-ver:3.6.3
@@ -113,8 +114,8 @@ RUN set -ex; \
 ARG R_VERSION
 ARG BUILD_DATE
 ARG CRAN
-ENV BUILD_DATE ${BUILD_DATE:-2020-07-01}
-ENV R_VERSION=${R_VERSION:-4.0.2} \
+ENV BUILD_DATE ${BUILD_DATE:-2020-04-24}
+ENV R_VERSION=${R_VERSION:-3.6.3} \
     CRAN=${CRAN:-https://cran.rstudio.com} \ 
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
@@ -137,13 +138,9 @@ RUN apt-get update \
     libjpeg62-turbo \
     libopenblas-dev \
     libpangocairo-1.0-0 \
-    libpcre2-8-0 \
     libpcre3 \
-    libpcre2-dev \
-    libpcre3-dev \
     libpng16-16 \
     libreadline7 \
-    libssl-dev \
     libtiff5 \
     liblzma5 \
     locales \
@@ -161,6 +158,7 @@ RUN apt-get update \
     libpango1.0-dev \
     libjpeg-dev \
     libicu-dev \
+    libpcre3-dev \
     libpng-dev \
     libreadline-dev \
     libtiff5-dev \
@@ -228,6 +226,7 @@ RUN apt-get update \
   && Rscript -e "install.packages(c('littler', 'docopt'), repo = '$CRAN')" \
   && ln -s /usr/local/lib/R/site-library/littler/examples/install2.r /usr/local/bin/install2.r \
   && ln -s /usr/local/lib/R/site-library/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
+  && ln -s /usr/local/lib/R/site-library/littler/examples/installBioc.r /usr/local/bin/installBioc.r \
   && ln -s /usr/local/lib/R/site-library/littler/bin/r /usr/local/bin/r \
   ## Clean up from R source install
   && cd / \
@@ -237,7 +236,7 @@ RUN apt-get update \
   && apt-get autoclean -y \
   && rm -rf /var/lib/apt/lists/*
 
-## PART 2: https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/4.0.2.Dockerfile
+## PART 2: https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/3.6.3.Dockerfile
 RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   libxml2-dev \
   libcairo2-dev \
@@ -260,7 +259,7 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   && install2.r --error \
     BiocManager
 
-## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/4.0.2.Dockerfile
+## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/3.6.3.Dockerfile
 # Version-stable CTAN repo from the tlnet archive at texlive.info, used in the
 # TinyTeX installation: chosen as the frozen snapshot of the TeXLive release
 # shipped for the base Debian image of a given rocker/r-ver tag.
@@ -271,7 +270,10 @@ ENV CTAN_REPO=${CTAN_REPO}
 ENV PATH=$PATH:/opt/TinyTeX/bin/x86_64-linux/
 
 ## Add LaTeX, rticles and bookdown support
-RUN apt-get update \
+RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
+  && dpkg -i texlive-local.deb \
+  && rm texlive-local.deb \
+  && apt-get update \
   && apt-get install -y --no-install-recommends \
     curl \
     default-jdk \
@@ -293,10 +295,6 @@ RUN apt-get update \
     ssh \
     texinfo \
     vim \
-    wget \
-  && wget "https://travis-bin.yihui.name/texlive-local.deb" \
-  && dpkg -i texlive-local.deb \
-  && rm texlive-local.deb \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   ## Use tinytex for LaTeX installation
@@ -328,13 +326,14 @@ RUN apt-get update \
   ## And some nice R packages for publishing-related stuff
   && install2.r --error --deps TRUE \
     bookdown rticles rmdshower rJava
+
 #------------------------------------------
 # INSTALL Python
-# Interpreted from python:3.8
-# https://github.com/docker-library/python/blob/master/3.8/buster/Dockerfile
+# Interpreted from python:3.6
+# https://github.com/docker-library/python/blob/master/3.6/buster/Dockerfile
 #------------------------------------------
 
-## PART 1: https://github.com/docker-library/python/blob/master/3.8/buster/Dockerfile
+## PART 1: https://github.com/docker-library/python/blob/master/3.6/buster/Dockerfile
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
@@ -347,11 +346,10 @@ ENV LANG C.UTF-8
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		libbluetooth-dev \
 		tk-dev \
-		uuid-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-ENV GPG_KEY E3FF2839C048B25C084DEBE9B26995E310250568
-ENV PYTHON_VERSION 3.8.3
+ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
+ENV PYTHON_VERSION 3.6.11
 
 RUN set -ex \
 	\
@@ -378,6 +376,42 @@ RUN set -ex \
 		--with-system-ffi \
 		--without-ensurepip \
 	&& make -j "$(nproc)" \
+# setting PROFILE_TASK makes "--enable-optimizations" reasonable: https://bugs.python.org/issue36044 / https://github.com/docker-library/python/issues/160#issuecomment-509426916
+		PROFILE_TASK='-m test.regrtest --pgo \
+			test_array \
+			test_base64 \
+			test_binascii \
+			test_binhex \
+			test_binop \
+			test_bytes \
+			test_c_locale_coercion \
+			test_class \
+			test_cmath \
+			test_codecs \
+			test_compile \
+			test_complex \
+			test_csv \
+			test_decimal \
+			test_dict \
+			test_float \
+			test_fstring \
+			test_hashlib \
+			test_io \
+			test_iter \
+			test_json \
+			test_long \
+			test_math \
+			test_memoryview \
+			test_pickle \
+			test_re \
+			test_set \
+			test_slice \
+			test_struct \
+			test_threading \
+			test_time \
+			test_traceback \
+			test_unicode \
+		' \
 	&& make install \
 	&& ldconfig \
 	\

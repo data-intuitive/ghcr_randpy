@@ -9,7 +9,9 @@ for os in $(fol_os); do
     for py in $(fol_py); do
       out=${os}_r${r}_py${py}.Dockerfile
       cat $fol_os/$os/Dockerfile > $out
+      echo >> $out
       cat $fol_r/$r/Dockerfile >> $out
+      echo >> $out
       cat $fol_py/$py/Dockerfile >> $out
     done
   done

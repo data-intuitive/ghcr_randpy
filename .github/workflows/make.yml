@@ -16,16 +16,23 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     name: randpy_r${{ matrix.config.r }}_py${{ matrix.config.python }}
 
+    env:
+      R_LATEST: 4.0
+      PY_LATEST: 3.8
+      REPO: dataintuitive/randpy
+
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {file: 'buster_r3.6.3_py3.6.11', tags: 'dataintuitive/randpy:r3.6.3_py3.6.11,dataintuitive/randpy:3.6_py3.6'}
-          - {file: 'buster_r3.6.3_py3.7.8', tags: 'dataintuitive/randpy:r3.6.3_py3.7.8,dataintuitive/randpy:r3.6_py3.7'}
-          - {file: 'buster_r3.6.3_py3.8.3', tags: 'dataintuitive/randpy:r3.6.3_py3.8.3,dataintuitive/randpy:r3.6_py3.8'}
-          - {file: 'buster_r4.0.2_py3.6.11', tags: 'dataintuitive/randpy:r4.0.2_py3.6.11,dataintuitive/randpy:r4.0_py3.6'}
-          - {file: 'buster_r4.0.2_py3.7.8', tags: 'dataintuitive/randpy:r4.0.2_py3.7.8,dataintuitive/randpy:r4.0_py3.7'}
-          - {file: 'buster_r4.0.2_py3.8.3', tags: 'dataintuitive/randpy:r4.0.2_py3.8.3,dataintuitive/randpy:r4.0_py3.8,dataintuitive/randpy:latest'}
+          - {file: 'r3.6_py2.7', extra_tags: ''}
+          - {file: 'r3.6_py3.6', extra_tags: ''}
+          - {file: 'r3.6_py3.7', extra_tags: ''}
+          - {file: 'r3.6_py3.8', extra_tags: ''}
+          - {file: 'r4.0_py2.7', extra_tags: ''}
+          - {file: 'r4.0_py3.6', extra_tags: ''}
+          - {file: 'r4.0_py3.7', extra_tags: ''}
+          - {file: 'r4.0_py3.8', extra_tags: ',dataintuitive/randpy:latest'}
 
     steps:
       - uses: actions/checkout@v2
@@ -47,5 +54,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           build_args: GITHUB_PAT=${{ secrets.PAT }}
-          tags: ${{ matrix.config.tags }}
+          tags: dataintuitive/randpy:${{ matrix.config.file }}${{ matrix.config.tags }}
           file: ${{ matrix.config.os }}_r${{ matrix.config.r }}_py${{ matrix.config.python }}.Dockerfile

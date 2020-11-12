@@ -102,6 +102,7 @@ RUN set -ex; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+
 #------------------------------------------
 # INSTALL R
 # Interpreted from rocker/r-ver:3.6.3
@@ -113,8 +114,8 @@ RUN set -ex; \
 ARG R_VERSION
 ARG BUILD_DATE
 ARG CRAN
-ENV BUILD_DATE ${BUILD_DATE:-2020-04-24}
-ENV R_VERSION=${R_VERSION:-3.6.3} \
+ENV BUILD_DATE ${BUILD_DATE:-2020-07-01}
+ENV R_VERSION=${R_VERSION:-4.0.2} \
     CRAN=${CRAN:-https://cran.rstudio.com} \ 
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
@@ -137,9 +138,13 @@ RUN apt-get update \
     libjpeg62-turbo \
     libopenblas-dev \
     libpangocairo-1.0-0 \
+    libpcre2-8-0 \
     libpcre3 \
+    libpcre2-dev \
+    libpcre3-dev \
     libpng16-16 \
     libreadline7 \
+    libssl-dev \
     libtiff5 \
     liblzma5 \
     locales \
@@ -157,7 +162,6 @@ RUN apt-get update \
     libpango1.0-dev \
     libjpeg-dev \
     libicu-dev \
-    libpcre3-dev \
     libpng-dev \
     libreadline-dev \
     libtiff5-dev \
@@ -234,7 +238,7 @@ RUN apt-get update \
   && apt-get autoclean -y \
   && rm -rf /var/lib/apt/lists/*
 
-## PART 2: https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/3.6.3.Dockerfile
+## PART 2: https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/4.0.2.Dockerfile
 RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   libxml2-dev \
   libcairo2-dev \
@@ -257,7 +261,7 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   && install2.r --error \
     BiocManager
 
-## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/3.6.3.Dockerfile
+## PART 3: https://github.com/rocker-org/rocker-versioned/blob/master/verse/4.0.2.Dockerfile
 # Version-stable CTAN repo from the tlnet archive at texlive.info, used in the
 # TinyTeX installation: chosen as the frozen snapshot of the TeXLive release
 # shipped for the base Debian image of a given rocker/r-ver tag.
@@ -268,10 +272,7 @@ ENV CTAN_REPO=${CTAN_REPO}
 ENV PATH=$PATH:/opt/TinyTeX/bin/x86_64-linux/
 
 ## Add LaTeX, rticles and bookdown support
-RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
-  && dpkg -i texlive-local.deb \
-  && rm texlive-local.deb \
-  && apt-get update \
+RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     curl \
     default-jdk \
@@ -293,6 +294,10 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
     ssh \
     texinfo \
     vim \
+    wget \
+  && wget "https://travis-bin.yihui.name/texlive-local.deb" \
+  && dpkg -i texlive-local.deb \
+  && rm texlive-local.deb \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   ## Use tinytex for LaTeX installation
@@ -324,6 +329,7 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
   ## And some nice R packages for publishing-related stuff
   && install2.r --error --deps TRUE \
     bookdown rticles rmdshower rJava
+
 #------------------------------------------
 # INSTALL Python
 # Interpreted from python:3.8

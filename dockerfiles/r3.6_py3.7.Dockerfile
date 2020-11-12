@@ -102,6 +102,7 @@ RUN set -ex; \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+
 #------------------------------------------
 # INSTALL R
 # Interpreted from rocker/r-ver:3.6.3
@@ -225,6 +226,7 @@ RUN apt-get update \
   && Rscript -e "install.packages(c('littler', 'docopt'), repo = '$CRAN')" \
   && ln -s /usr/local/lib/R/site-library/littler/examples/install2.r /usr/local/bin/install2.r \
   && ln -s /usr/local/lib/R/site-library/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
+  && ln -s /usr/local/lib/R/site-library/littler/examples/installBioc.r /usr/local/bin/installBioc.r \
   && ln -s /usr/local/lib/R/site-library/littler/bin/r /usr/local/bin/r \
   ## Clean up from R source install
   && cd / \
@@ -324,13 +326,14 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
   ## And some nice R packages for publishing-related stuff
   && install2.r --error --deps TRUE \
     bookdown rticles rmdshower rJava
+
 #------------------------------------------
 # INSTALL Python
-# Interpreted from python:3.6
-# https://github.com/docker-library/python/blob/master/3.6/buster/Dockerfile
+# Interpreted from python:3.7
+# https://github.com/docker-library/python/blob/master/3.7/buster/Dockerfile
 #------------------------------------------
 
-## PART 1: https://github.com/docker-library/python/blob/master/3.6/buster/Dockerfile
+## PART 1: https://github.com/docker-library/python/blob/master/3.7/buster/Dockerfile
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
@@ -343,10 +346,11 @@ ENV LANG C.UTF-8
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		libbluetooth-dev \
 		tk-dev \
+		uuid-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY 0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D
-ENV PYTHON_VERSION 3.6.11
+ENV PYTHON_VERSION 3.7.8
 
 RUN set -ex \
 	\
@@ -454,5 +458,3 @@ RUN set -ex; \
 			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
-
-CMD ["python3"]
