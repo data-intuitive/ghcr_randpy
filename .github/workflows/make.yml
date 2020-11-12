@@ -84,7 +84,3 @@ jobs:
           build-args: GITHUB_PAT=${{ secrets.PAT }}
           tags: dataintuitive/randpy:${{ matrix.config.file }}${{ matrix.config.extra_tags }}
           file: dockerfiles/${{ matrix.config.file }}.Dockerfile
-          
-      - name: Inspect
-        run: |
-          docker image inspect dataintuitive/randpy:${{ matrix.config.file }}
