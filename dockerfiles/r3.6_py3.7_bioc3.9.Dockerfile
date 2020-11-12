@@ -531,10 +531,6 @@ RUN apt-get update \
 	libprotobuf-dev \
 	libpq-dev \
 	libperl-dev \
-	libmariadb-dev-compat \
-	libjpeg-dev \
-	libjpeg-turbo8-dev \
-	libjpeg8-dev \
 	## software - perl extentions and modules
 	libarchive-extract-perl \
 	libfile-copy-recursive-perl \
@@ -542,7 +538,7 @@ RUN apt-get update \
 	libdbi-perl \
 	libdbd-mysql-perl \
 	libxml-simple-perl \
-	libmysqlclient-dev \
+	# libmysqlclient-dev \
 	default-libmysqlclient-dev \
 	libgdal-dev \
 	## new libs
@@ -587,6 +583,17 @@ RUN apt-get update \
 # 	&& apt-get clean \
 # 	&& rm -rf /var/lib/apt/lists/* \
 # 	&& rm -rf get-pip.py
+
+## FIXME
+## These two libraries don't install in the above section--WHY?
+RUN apt-get update \
+	&& apt-get -y --no-install-recommends install \
+	libmariadb-dev-compat \
+	libjpeg-dev \
+	# libjpeg-turbo8-dev \
+	# libjpeg8-dev \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
 # # Install libsbml and xvfb
 RUN cd /tmp \
