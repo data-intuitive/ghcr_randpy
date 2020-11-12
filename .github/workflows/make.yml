@@ -20,14 +20,23 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - {file: 'py2.7', extra_tags: ''}
+          - {file: 'py3.6', extra_tags: ''}
+          - {file: 'py3.7', extra_tags: ''}
+          - {file: 'py3.8', extra_tags: ''}
+          - {file: 'py3.9', extra_tags: ''}
+          - {file: 'r3.6', extra_tags: ''}
+          - {file: 'r4.0', extra_tags: ''}
           - {file: 'r3.6_py2.7', extra_tags: ''}
           - {file: 'r3.6_py3.6', extra_tags: ''}
           - {file: 'r3.6_py3.7', extra_tags: ''}
           - {file: 'r3.6_py3.8', extra_tags: ''}
+          - {file: 'r3.6_py3.9', extra_tags: ''}
           - {file: 'r4.0_py2.7', extra_tags: ''}
           - {file: 'r4.0_py3.6', extra_tags: ''}
           - {file: 'r4.0_py3.7', extra_tags: ''}
-          - {file: 'r4.0_py3.8', extra_tags: ',dataintuitive/randpy:latest'}
+          - {file: 'r4.0_py3.8', extra_tags: ''}
+          - {file: 'r4.0_py3.9', extra_tags: ',dataintuitive/randpy:latest'}
 
     steps:
       - uses: actions/checkout@v2
