@@ -37,6 +37,30 @@ jobs:
           - {file: 'r4.0_py3.7', extra_tags: ''}
           - {file: 'r4.0_py3.8', extra_tags: ''}
           - {file: 'r4.0_py3.9', extra_tags: ',dataintuitive/randpy:latest'}
+          - {file: 'r3.6_bioc3.9', extra_tags: ''}
+          - {file: 'r3.6_py2.7_bioc3.9', extra_tags: ''}
+          - {file: 'r3.6_py3.6_bioc3.9', extra_tags: ''}
+          - {file: 'r3.6_py3.7_bioc3.9', extra_tags: ''}
+          - {file: 'r3.6_py3.8_bioc3.9', extra_tags: ''}
+          - {file: 'r3.6_py3.9_bioc3.9', extra_tags: ''}
+          - {file: 'r3.6_bioc3.10', extra_tags: ''}
+          - {file: 'r3.6_py2.7_bioc3.10', extra_tags: ''}
+          - {file: 'r3.6_py3.6_bioc3.10', extra_tags: ''}
+          - {file: 'r3.6_py3.7_bioc3.10', extra_tags: ''}
+          - {file: 'r3.6_py3.8_bioc3.10', extra_tags: ''}
+          - {file: 'r3.6_py3.9_bioc3.10', extra_tags: ''}
+          - {file: 'r4.0_bioc3.11', extra_tags: ''}
+          - {file: 'r4.0_py2.7_bioc3.11', extra_tags: ''}
+          - {file: 'r4.0_py3.6_bioc3.11', extra_tags: ''}
+          - {file: 'r4.0_py3.7_bioc3.11', extra_tags: ''}
+          - {file: 'r4.0_py3.8_bioc3.11', extra_tags: ''}
+          - {file: 'r4.0_py3.9_bioc3.11', extra_tags: ''}
+          - {file: 'r4.0_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_py2.7_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_py3.6_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_py3.7_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_py3.8_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_py3.9_bioc3.12', extra_tags: ''}
 
     steps:
       - uses: actions/checkout@v2
@@ -63,4 +87,4 @@ jobs:
           
       - name: Inspect
         run: |
-          docker image inspect myimage:latest
+          docker image inspect dataintuitive/randpy:${{ matrix.config.file }}
