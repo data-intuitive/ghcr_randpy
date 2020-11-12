@@ -50,4 +50,4 @@ jobs:
         with:
           build-args: GITHUB_PAT=${{ secrets.PAT }}
           tags: dataintuitive/randpy:${{ matrix.config.file }}${{ matrix.config.tags }}
-          file: ${{ matrix.config.file }}.Dockerfile
+          file: dockerfiles/${{ matrix.config.file }}.Dockerfile
