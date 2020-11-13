@@ -426,7 +426,7 @@ RUN set -ex; \
 
 #------------------------------------------
 # INSTALL R
-# Interpreted from bioconductor/bioconductor_docker:3.12
+# Interpreted from bioconductor/bioconductor_docker:3.9
 # https://github.com/Bioconductor/bioconductor_docker/blob/master/Dockerfile
 #------------------------------------------
 
@@ -575,12 +575,10 @@ RUN cd /tmp \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site \
-	&& echo "options(defaultPackages=c(getOption('defaultPackages'),'BiocManager'))" >> /usr/local/lib/R/etc/Rprofile.site
+RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
+  
+RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))'
 
-RUN install2.r --error --skipinstalled -r $CRAN -n $NCPUS BiocManager && \
-  ln -s /usr/local/lib/R/site-library/littler/examples/installBioc.r /usr/local/bin/installBioc.r
-  
 RUN Rscript -e 'BiocManager::install(version="3.9", update=TRUE, ask=FALSE)'
-  
-RUN installBioc.r SingleCellExperiment
+
+RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'

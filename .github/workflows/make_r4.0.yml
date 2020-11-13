@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: "0 0 * * 1"
 
-name: make
+name: randpy with R 4.0
 
 jobs:
   build_containers:
@@ -20,11 +20,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {file: 'py2.7', extra_tags: ''}
-          - {file: 'py3.6', extra_tags: ''}
-          - {file: 'py3.7', extra_tags: ''}
-          - {file: 'py3.8', extra_tags: ''}
-          - {file: 'py3.9', extra_tags: ''}
           - {file: 'r4.0', extra_tags: ''}
           - {file: 'r4.0_py2.7', extra_tags: ''}
           - {file: 'r4.0_py3.6', extra_tags: ''}
