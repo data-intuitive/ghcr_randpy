@@ -480,8 +480,10 @@ RUN cd /tmp \
 
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
   
-RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))'
+# install bioconductor dependencies
+RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
+  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
+  Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
 
-RUN Rscript -e 'BiocManager::install(version="3.10", update=TRUE, ask=FALSE)'
-
-RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
+# install miniconda and anndata
+RUN Rscript -e 'remotes::install_cran("anndata"); reticulate::install_miniconda(); anndata::install_anndata()'

@@ -396,5 +396,5 @@ RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "r
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
 
 # install miniconda and anndata
-RUN Rscript -e 'remotes::install_github("rcannood/anndata"); reticulate::install_miniconda(); anndata::install_anndata()'
+RUN Rscript -e 'remotes::install_cran("anndata"); reticulate::install_miniconda(); anndata::install_anndata()'
 
