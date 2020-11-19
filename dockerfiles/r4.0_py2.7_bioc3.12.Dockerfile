@@ -271,15 +271,6 @@ RUN pip install --no-cache-dir virtualenv
 # https://github.com/Bioconductor/bioconductor_docker/blob/master/Dockerfile
 #------------------------------------------
 
-# nuke cache dirs before installing pkgs; tip from Dirk E fixes broken img
-# RUN rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
-
-# issues with '/var/lib/dpkg/available' not found; this will recreate
-# RUN dpkg --clear-avail
-
-# This is to avoid the error 'debconf: unable to initialize frontend: Dialog'
-# ENV DEBIAN_FRONTEND noninteractive
-
 # Update apt-get
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends apt-utils \
@@ -370,25 +361,6 @@ RUN apt-get update \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-## Python installations
-# python 2?!
-# RUN apt-get update \
-# 	&& apt-get install -y software-properties-common \
-# 	&& add-apt-repository universe \
-# 	&& apt-get update \
-# 	&& apt-get -y --no-install-recommends install python2 python-dev \
-# 	&& curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py \
-# 	&& python2 get-pip.py \
-# 	&& pip2 install wheel \
-# 	## Install sklearn and pandas on python
-# 	&& pip2 install sklearn \
-# 	pandas \
-# 	pyyaml \
-# 	cwltool \
-# 	&& apt-get clean \
-# 	&& rm -rf /var/lib/apt/lists/* \
-# 	&& rm -rf get-pip.py
-
 ## FIXME
 ## These two libraries don't install in the above section--WHY?
 RUN apt-get update \
@@ -417,9 +389,12 @@ RUN cd /tmp \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
-  
-RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))'
 
-RUN Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)'
+# install bioconductor dependencies
+RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
+  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
+  Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
 
-RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
+# install miniconda and anndata
+RUN Rscript -e 'remotes::install_github("rcannood/anndata"); reticulate::install_miniconda(); anndata::install_anndata()'
+
