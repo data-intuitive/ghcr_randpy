@@ -436,8 +436,9 @@ RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib
   
 # install bioconductor dependencies
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
-  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
+  Rscript -e 'BiocManager::install(version="3.11", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
 
-# install miniconda and anndata
-RUN Rscript -e 'remotes::install_cran("anndata"); reticulate::install_miniconda(); anndata::install_anndata()'
+# install anndata. only install miniconda if no custom python was installed.
+RUN if [ `which python` != "/usr/local/bin/python" ]; Rscript -e 'reticulate::install_miniconda()' fi && \
+  Rscript -e 'remotes::install_cran("anndata"); anndata::install_anndata()'

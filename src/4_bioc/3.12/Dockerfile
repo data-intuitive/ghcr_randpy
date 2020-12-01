@@ -128,6 +128,7 @@ RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "r
   Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
 
-# install miniconda and anndata
-RUN Rscript -e 'remotes::install_cran("anndata"); reticulate::install_miniconda(); anndata::install_anndata()'
+# install anndata. only install miniconda if no custom python was installed.
+RUN if [ `which python` != "/usr/local/bin/python" ]; then Rscript -e 'reticulate::install_miniconda()' fi && \
+  Rscript -e 'remotes::install_cran("anndata"); anndata::install_anndata()'
 
