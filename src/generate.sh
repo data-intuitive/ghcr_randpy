@@ -11,7 +11,7 @@ for os in $(ls $fol_os); do
     for py in $(ls $fol_py); do
       out=dockerfiles/r${r}_py${py}.Dockerfile
       cat $fol_os/$os/Dockerfile > $out
-      echo >> $outgi
+      echo >> $out
       cat $fol_r/$r/Dockerfile >> $out
       echo >> $out
       cat $fol_py/$py/Dockerfile >> $out

@@ -407,7 +407,7 @@ RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib
 
 # temporary workaround for unreachable bioconductor.org issue
 RUN echo 'options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")' >> /usr/local/lib/R/etc/Rprofile.site
-ADD bioc_config.yaml /bioc_config.yaml
+COPY bioc_config.yaml /bioc_config.yaml
 RUN echo 'options(BIOCONDUCTOR_CONFIG_FILE = "file:///bioc_config.yaml")' >> /usr/local/lib/R/etc/Rprofile.site
 
 # install bioconductor dependencies
