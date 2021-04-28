@@ -297,6 +297,7 @@ RUN apt-get update \
 	libz-dev \
 	liblzma-dev \
 	libbz2-dev \
+	libgit2-dev \
 	libpng-dev \
 	## sys deps from bioc_full
 	pkg-config \
@@ -349,7 +350,7 @@ RUN apt-get update \
 	libdbi-perl \
 	libdbd-mysql-perl \
 	libxml-simple-perl \
-	# libmysqlclient-dev \
+	libmysqlclient-dev \
 	default-libmysqlclient-dev \
 	libgdal-dev \
 	## new libs
@@ -372,9 +373,28 @@ RUN apt-get update \
 	## Additional resources
 	xfonts-100dpi \
 	xfonts-75dpi \
-	biber \
+	 biber \
+	libsbml5-dev \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
+
+## Python installations
+RUN apt-get update \
+	&& apt-get install -y software-properties-common \
+	&& add-apt-repository universe \
+	&& apt-get update \
+	&& apt-get -y --no-install-recommends install python2 python-dev \
+	&& curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py \
+	&& python2 get-pip.py \
+	&& pip2 install wheel \
+	## Install sklearn and pandas on python
+	&& pip2 install sklearn \
+	pandas \
+	pyyaml \
+	cwltool \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf get-pip.py
 
 ## FIXME
 ## These two libraries don't install in the above section--WHY?
@@ -382,28 +402,26 @@ RUN apt-get update \
 	&& apt-get -y --no-install-recommends install \
 	libmariadb-dev-compat \
 	libjpeg-dev \
-	# libjpeg-turbo8-dev \
-	# libjpeg8-dev \
-	&& apt-get clean \
-	&& rm -rf /var/lib/apt/lists/*
-
-# # Install libsbml and xvfb
-RUN cd /tmp \
-	## libsbml
-	&& curl -O https://s3.amazonaws.com/linux-provisioning/libSBML-5.10.2-core-src.tar.gz \
-	&& tar zxf libSBML-5.10.2-core-src.tar.gz \
-	&& cd libsbml-5.10.2 \
-	&& ./configure --enable-layout \
-	&& make \
-	&& make install \
-	## Clean libsbml, and tar.gz files
-	&& rm -rf /tmp/libsbml-5.10.2 \
-	&& rm -rf /tmp/libSBML-5.10.2-core-src.tar.gz \
-	## apt-get clean and remove cache
+	libjpeg-turbo8-dev \
+	libjpeg8-dev \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
+
+RUN Rscript -e 'install.packages("BiocManager", repos="https://cran.rstudio.com")' && \
+  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
+  Rscript -e 'BiocManager::install("devtools")'
+
+RUN echo BIOCONDUCTOR_VERSION=${BIOCONDUCTOR_VERSION} >> /usr/local/lib/R/etc/Renviron.site \
+	&& echo BIOCONDUCTOR_DOCKER_VERSION=${BIOCONDUCTOR_DOCKER_VERSION} >> /usr/local/lib/R/etc/Renviron.site \
+	&& echo 'LIBSBML_CFLAGS="-I/usr/include"' >> /usr/local/lib/R/etc/Renviron.site \
+	&& echo 'LIBSBML_LIBS="-lsbml"' >> /usr/local/lib/R/etc/Renviron.site
+
+ENV LIBSBML_CFLAGS="-I/usr/include"
+ENV LIBSBML_LIBS="-lsbml"
+ENV BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION
+ENV BIOCONDUCTOR_VERSION=$BIOCONDUCTOR_VERSION
 
 # temporary workaround for unreachable bioconductor.org issue
 RUN echo 'options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")' >> /usr/local/lib/R/etc/Rprofile.site
