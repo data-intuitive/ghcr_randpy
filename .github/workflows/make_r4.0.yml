@@ -33,11 +33,17 @@ jobs:
           - {file: 'r4.0_py3.8_bioc3.11', extra_tags: ''}
           - {file: 'r4.0_py3.9_bioc3.11', extra_tags: ''}
           - {file: 'r4.0_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_bioc3.12_workaround', extra_tags: ''}
           - {file: 'r4.0_py2.7_bioc3.12', extra_tags: ''}
           - {file: 'r4.0_py3.6_bioc3.12', extra_tags: ''}
           - {file: 'r4.0_py3.7_bioc3.12', extra_tags: ''}
           - {file: 'r4.0_py3.8_bioc3.12', extra_tags: ''}
           - {file: 'r4.0_py3.9_bioc3.12', extra_tags: ''}
+          - {file: 'r4.0_py2.7_bioc3.12_workaround', extra_tags: ''}
+          - {file: 'r4.0_py3.6_bioc3.12_workaround', extra_tags: ''}
+          - {file: 'r4.0_py3.7_bioc3.12_workaround', extra_tags: ''}
+          - {file: 'r4.0_py3.8_bioc3.12_workaround', extra_tags: ''}
+          - {file: 'r4.0_py3.9_bioc3.12_workaround', extra_tags: ''}
 
     steps:
       - uses: actions/checkout@v2

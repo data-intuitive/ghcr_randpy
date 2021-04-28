@@ -11,13 +11,20 @@ for os in $(ls $fol_os); do
     for py in $(ls $fol_py); do
       out=dockerfiles/r${r}_py${py}.Dockerfile
       cat $fol_os/$os/Dockerfile > $out
-      echo >> $out
+      echo >> $outgi
       cat $fol_r/$r/Dockerfile >> $out
       echo >> $out
       cat $fol_py/$py/Dockerfile >> $out
       
       if [ $r == "4.0" ]; then
         bioc=3.12
+        out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+        cat $out > $out2
+        echo >> $out2
+        cat $fol_bioc/$bioc/Dockerfile >> $out2
+      fi
+      if [ $r == "4.0" ]; then
+        bioc=3.12_workaround
         out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
         cat $out > $out2
         echo >> $out2
@@ -58,6 +65,13 @@ for os in $(ls $fol_os); do
       
     if [ $r == "4.0" ]; then
       bioc=3.12
+      out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+      cat $out > $out2
+      echo >> $out2
+      cat $fol_bioc/$bioc/Dockerfile >> $out2
+    fi
+    if [ $r == "4.0" ]; then
+      bioc=3.12_workaround
       out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
       cat $out > $out2
       echo >> $out2
