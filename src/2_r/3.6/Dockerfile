@@ -29,13 +29,13 @@ RUN apt-get update \
     libbz2-1.0 \
     libcurl4 \
     libcurl4-openssl-dev \
-    libicu63 \
-    libjpeg62-turbo \
+    libicu66 \
+    libjpeg62 \
     libopenblas-dev \
     libpangocairo-1.0-0 \
     libpcre3 \
     libpng16-16 \
-    libreadline7 \
+    libreadline8 \
     libtiff5 \
     liblzma5 \
     locales \
