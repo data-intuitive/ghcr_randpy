@@ -1,9 +1,9 @@
-FROM debian:buster
+FROM ubuntu:focal
 
-LABEL org.label-schema.license="MIT" \
-      org.label-schema.vcs-url="https://github.com/data-intuitive/randpy" \
-      org.label-schema.vendor="randpy: R and Python in one container" \
-      maintainer="Robrecht Cannoodt <robrecht@data-intuitive.com>"
+LABEL org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/data-intuitive/ghcr_randpy" \
+      org.opencontainers.image.vendor="randpy: R and Python in one container" \
+      org.opencontainers.image.authors="Robrecht Cannoodt <robrecht@data-intuitive.com>"
 
 #------------------------------------------
 # INSTALL build deps
@@ -14,12 +14,15 @@ LABEL org.label-schema.license="MIT" \
 #------------------------------------------
 
 ## PART 1: https://github.com/docker-library/buildpack-deps/blob/master/debian/buster/curl/Dockerfile
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		curl \
 		netbase \
 		wget \
-	&& rm -rf /var/lib/apt/lists/*
+	; \
+	rm -rf /var/lib/apt/lists/*
 
 RUN set -ex; \
 	if ! command -v gpg > /dev/null; then \
@@ -44,9 +47,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 ## PART 3: https://github.com/docker-library/buildpack-deps/blob/master/debian/buster/Dockerfile
+# prepend apt-get install with DEBIAN_FRONTEND=noninteractive -> make sure debconf doesn't try to prompt (e.g. tzdata on Ubuntu)
 RUN set -ex; \
 	apt-get update; \
-# make sure debconf doesn't try to prompt (e.g. tzdata on Ubuntu)
 	DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends \
 		autoconf \
@@ -117,21 +120,28 @@ RUN cd / && \
   rm -r master.zip /rocker-versioned2-master
   
 ## PART 2: install R
-ENV BUILD_DATE=2020-11-12 \
-    R_VERSION=4.0.3 \
-    CRAN="https://cran.rstudio.com" \ 
-    LC_ALL=en_US.UTF-8 \
-    LANG=en_US.UTF-8 \
-    TERM=xterm \
-    R_HOME=/usr/local/lib/R \
-    TZ=Etc/UTC
-    
-RUN UBUNTU_VERSION=bionic /rocker_scripts/install_R.sh
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/r-ver_4.0.5.Dockerfile
+ENV R_VERSION=4.0.5
+ENV TERM=xterm
+ENV R_HOME=/usr/local/lib/R
+ENV TZ=Etc/UTC
+
+RUN /rocker_scripts/install_R_source.sh
+
+ENV CRAN=https://packagemanager.rstudio.com/cran/__linux__/focal/2021-05-17
+ENV LANG=en_US.UTF-8
+
+COPY scripts /rocker_scripts
+
+RUN /rocker_scripts/setup_R.sh
 
 ## PART 3: install pandoc & rstudio
-ENV S6_VERSION=v1.21.7.0 \
-    RSTUDIO_VERSION=latest \
-    PATH=/usr/lib/rstudio-server/bin:$PATH
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/rstudio_4.0.5.Dockerfile
+ENV S6_VERSION=v2.1.0.2
+ENV RSTUDIO_VERSION=1.4.1106
+ENV DEFAULT_USER=rstudio
+ENV PANDOC_VERSION=default
+ENV PATH=/usr/lib/rstudio-server/bin:$PATH
 
 RUN /rocker_scripts/install_rstudio.sh
 RUN /rocker_scripts/install_pandoc.sh
@@ -139,11 +149,13 @@ RUN /rocker_scripts/install_pandoc.sh
 EXPOSE 8787
 
 ## PART 4: install tidyverse
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/tidyverse_4.0.5.Dockerfile
 RUN /rocker_scripts/install_tidyverse.sh
 
 ## PART 5: install verse
-ENV CTAN_REPO=http://mirror.ctan.org/systems/texlive/tlnet \
-    PATH=/usr/local/texlive/bin/x86_64-linux:$PATH
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/verse_4.0.5.Dockerfile
+ENV CTAN_REPO=https://www.texlive.info/tlnet-archive/2021/05/17/tlnet
+ENV PATH=$PATH:/usr/local/texlive/bin/x86_64-linux
 
 RUN /rocker_scripts/install_verse.sh
 
@@ -268,8 +280,26 @@ RUN pip install --no-cache-dir virtualenv
 #------------------------------------------
 # INSTALL R
 # Interpreted from bioconductor/bioconductor_docker:3.11
-# https://github.com/Bioconductor/bioconductor_docker/blob/master/Dockerfile
+# https://github.com/Bioconductor/bioconductor_docker/blob/RELEASE_3_11/Dockerfile
 #------------------------------------------
+
+## Set Dockerfile version number
+## This parameter should be incremented each time there is a change in the Dockerfile
+ARG BIOCONDUCTOR_DOCKER_VERSION=3.11.11
+
+RUN echo BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION >> /etc/environment \
+	&& echo BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION >> /root/.bashrc
+
+# nuke cache dirs before installing pkgs; tip from Dirk E fixes broken img
+RUN rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
+
+# issues with '/var/lib/dpkg/available' not found
+# this will recreate
+RUN dpkg --clear-avail
+
+# This is to avoid the error
+# 'debconf: unable to initialize frontend: Dialog'
+ENV DEBIAN_FRONTEND noninteractive
 
 # Update apt-get
 RUN apt-get update \
@@ -407,20 +437,7 @@ COPY ./deps/xvfb_init /etc/services.d/xvfb/run
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site \
 	&& echo "options(defaultPackages=c(getOption('defaultPackages'),'BiocManager'))" >> /usr/local/lib/R/etc/Rprofile.site
 
-RUN Rscript -e 'install.packages("BiocManager", repos="https://cran.rstudio.com")' && \
-  Rscript -e 'BiocManager::install(version="3.11", update=TRUE, ask=FALSE)' && \
-  Rscript -e 'BiocManager::install("devtools")'
-  
-# install bioconductor dependencies
+# install some bioconductor dependencies
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
   Rscript -e 'BiocManager::install(version="3.11", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
-
-# install anndata. only install miniconda if no custom python was installed.
-RUN if [ `which python` != "/usr/local/bin/python" ]; then \
-    Rscript -e 'reticulate::install_miniconda(); remotes::install_github("rcannood/anndata"); anndata::install_anndata()'; \
-  else \
-    echo "RETICULATE_PYTHON='`which python`'" >> $R_HOME/etc/Renviron.site; \
-    pip install anndata; \
-    Rscript -e 'remotes::install_github("rcannood/anndata")'; \
-  fi

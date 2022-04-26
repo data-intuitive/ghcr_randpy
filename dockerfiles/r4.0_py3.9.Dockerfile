@@ -1,9 +1,9 @@
-FROM debian:buster
+FROM ubuntu:focal
 
-LABEL org.label-schema.license="MIT" \
-      org.label-schema.vcs-url="https://github.com/data-intuitive/randpy" \
-      org.label-schema.vendor="randpy: R and Python in one container" \
-      maintainer="Robrecht Cannoodt <robrecht@data-intuitive.com>"
+LABEL org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/data-intuitive/ghcr_randpy" \
+      org.opencontainers.image.vendor="randpy: R and Python in one container" \
+      org.opencontainers.image.authors="Robrecht Cannoodt <robrecht@data-intuitive.com>"
 
 #------------------------------------------
 # INSTALL build deps
@@ -14,12 +14,15 @@ LABEL org.label-schema.license="MIT" \
 #------------------------------------------
 
 ## PART 1: https://github.com/docker-library/buildpack-deps/blob/master/debian/buster/curl/Dockerfile
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		curl \
 		netbase \
 		wget \
-	&& rm -rf /var/lib/apt/lists/*
+	; \
+	rm -rf /var/lib/apt/lists/*
 
 RUN set -ex; \
 	if ! command -v gpg > /dev/null; then \
@@ -44,9 +47,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 ## PART 3: https://github.com/docker-library/buildpack-deps/blob/master/debian/buster/Dockerfile
+# prepend apt-get install with DEBIAN_FRONTEND=noninteractive -> make sure debconf doesn't try to prompt (e.g. tzdata on Ubuntu)
 RUN set -ex; \
 	apt-get update; \
-# make sure debconf doesn't try to prompt (e.g. tzdata on Ubuntu)
 	DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends \
 		autoconf \
@@ -117,21 +120,28 @@ RUN cd / && \
   rm -r master.zip /rocker-versioned2-master
   
 ## PART 2: install R
-ENV BUILD_DATE=2020-11-12 \
-    R_VERSION=4.0.3 \
-    CRAN="https://cran.rstudio.com" \ 
-    LC_ALL=en_US.UTF-8 \
-    LANG=en_US.UTF-8 \
-    TERM=xterm \
-    R_HOME=/usr/local/lib/R \
-    TZ=Etc/UTC
-    
-RUN UBUNTU_VERSION=bionic /rocker_scripts/install_R.sh
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/r-ver_4.0.5.Dockerfile
+ENV R_VERSION=4.0.5
+ENV TERM=xterm
+ENV R_HOME=/usr/local/lib/R
+ENV TZ=Etc/UTC
+
+RUN /rocker_scripts/install_R_source.sh
+
+ENV CRAN=https://packagemanager.rstudio.com/cran/__linux__/focal/2021-05-17
+ENV LANG=en_US.UTF-8
+
+COPY scripts /rocker_scripts
+
+RUN /rocker_scripts/setup_R.sh
 
 ## PART 3: install pandoc & rstudio
-ENV S6_VERSION=v1.21.7.0 \
-    RSTUDIO_VERSION=latest \
-    PATH=/usr/lib/rstudio-server/bin:$PATH
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/rstudio_4.0.5.Dockerfile
+ENV S6_VERSION=v2.1.0.2
+ENV RSTUDIO_VERSION=1.4.1106
+ENV DEFAULT_USER=rstudio
+ENV PANDOC_VERSION=default
+ENV PATH=/usr/lib/rstudio-server/bin:$PATH
 
 RUN /rocker_scripts/install_rstudio.sh
 RUN /rocker_scripts/install_pandoc.sh
@@ -139,11 +149,13 @@ RUN /rocker_scripts/install_pandoc.sh
 EXPOSE 8787
 
 ## PART 4: install tidyverse
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/tidyverse_4.0.5.Dockerfile
 RUN /rocker_scripts/install_tidyverse.sh
 
 ## PART 5: install verse
-ENV CTAN_REPO=http://mirror.ctan.org/systems/texlive/tlnet \
-    PATH=/usr/local/texlive/bin/x86_64-linux:$PATH
+# https://github.com/rocker-org/rocker-versioned2/blob/master/dockerfiles/verse_4.0.5.Dockerfile
+ENV CTAN_REPO=https://www.texlive.info/tlnet-archive/2021/05/17/tlnet
+ENV PATH=$PATH:/usr/local/texlive/bin/x86_64-linux
 
 RUN /rocker_scripts/install_verse.sh
 
@@ -163,84 +175,99 @@ ENV PATH /usr/local/bin:$PATH
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
 
-# extra dependencies (over what buildpack-deps already includes)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# runtime dependencies
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
 		libbluetooth-dev \
 		tk-dev \
 		uuid-dev \
-	&& rm -rf /var/lib/apt/lists/*
+	; \
+	rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY E3FF2839C048B25C084DEBE9B26995E310250568
-ENV PYTHON_VERSION 3.9.0
+ENV PYTHON_VERSION 3.9.12
 
-RUN set -ex \
+RUN set -eux; \
 	\
-	&& wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz" \
-	&& wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc" \
-	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$GPG_KEY" \
-	&& gpg --batch --verify python.tar.xz.asc python.tar.xz \
-	&& { command -v gpgconf > /dev/null && gpgconf --kill all || :; } \
-	&& rm -rf "$GNUPGHOME" python.tar.xz.asc \
-	&& mkdir -p /usr/src/python \
-	&& tar -xJC /usr/src/python --strip-components=1 -f python.tar.xz \
-	&& rm python.tar.xz \
+	wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
+	wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
+	GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
+	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
+	gpg --batch --verify python.tar.xz.asc python.tar.xz; \
+	command -v gpgconf > /dev/null && gpgconf --kill all || :; \
+	rm -rf "$GNUPGHOME" python.tar.xz.asc; \
+	mkdir -p /usr/src/python; \
+	tar --extract --directory /usr/src/python --strip-components=1 --file python.tar.xz; \
+	rm python.tar.xz; \
 	\
-	&& cd /usr/src/python \
-	&& gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
-	&& ./configure \
+	cd /usr/src/python; \
+	gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)"; \
+	./configure \
 		--build="$gnuArch" \
 		--enable-loadable-sqlite-extensions \
 		--enable-optimizations \
 		--enable-option-checking=fatal \
 		--enable-shared \
 		--with-system-expat \
-		--with-system-ffi \
 		--without-ensurepip \
-	&& make -j "$(nproc)" \
-	&& make install \
-	&& rm -rf /usr/src/python \
-	\
-	&& find /usr/local -depth \
-		\( \
-			\( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
-			-o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name '*.a' \) \) \
-		\) -exec rm -rf '{}' + \
-	\
-	&& ldconfig \
-	\
-	&& python3 --version
-
-# make some useful symlinks that are expected to exist
-RUN cd /usr/local/bin \
-	&& ln -s idle3 idle \
-	&& ln -s pydoc3 pydoc \
-	&& ln -s python3 python \
-	&& ln -s python3-config python-config
-
-# if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 20.2.4
-# https://github.com/pypa/get-pip
-ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/fa7dc83944936bf09a0e4cb5d5ec852c0d256599/get-pip.py
-ENV PYTHON_GET_PIP_SHA256 6e0bb0a2c2533361d7f297ed547237caf1b7507f197835974c0dd7eba998c53c
-
-RUN set -ex; \
-	\
-	wget -O get-pip.py "$PYTHON_GET_PIP_URL"; \
-	echo "$PYTHON_GET_PIP_SHA256 *get-pip.py" | sha256sum --check --strict -; \
-	\
-	python get-pip.py \
-		--disable-pip-version-check \
-		--no-cache-dir \
-		"pip==$PYTHON_PIP_VERSION" \
 	; \
-	pip --version; \
+	nproc="$(nproc)"; \
+	make -j "$nproc" \
+	; \
+	make install; \
+	\
+# enable GDB to load debugging data: https://github.com/docker-library/python/pull/701
+	bin="$(readlink -ve /usr/local/bin/python3)"; \
+	dir="$(dirname "$bin")"; \
+	mkdir -p "/usr/share/gdb/auto-load/$dir"; \
+	cp -vL Tools/gdb/libpython.py "/usr/share/gdb/auto-load/$bin-gdb.py"; \
+	\
+	cd /; \
+	rm -rf /usr/src/python; \
 	\
 	find /usr/local -depth \
 		\( \
 			\( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
-			-o \
-			\( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
-		\) -exec rm -rf '{}' +; \
-	rm -f get-pip.py
+			-o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \
+		\) -exec rm -rf '{}' + \
+	; \
+	\
+	ldconfig; \
+	\
+	python3 --version
 
+# make some useful symlinks that are expected to exist ("/usr/local/bin/python" and friends)
+RUN set -eux; \
+	for src in idle3 pydoc3 python3 python3-config; do \
+		dst="$(echo "$src" | tr -d 3)"; \
+		[ -s "/usr/local/bin/$src" ]; \
+		[ ! -e "/usr/local/bin/$dst" ]; \
+		ln -svT "$src" "/usr/local/bin/$dst"; \
+	done
+
+# if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
+ENV PYTHON_PIP_VERSION 22.0.4
+# https://github.com/docker-library/python/issues/365
+ENV PYTHON_SETUPTOOLS_VERSION 58.1.0
+# https://github.com/pypa/get-pip
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/38e54e5de07c66e875c11a1ebbdb938854625dd8/public/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 e235c437e5c7d7524fbce3880ca39b917a73dc565e0c813465b7a7a329bb279a
+
+RUN set -eux; \
+	\
+	wget -O get-pip.py "$PYTHON_GET_PIP_URL"; \
+	echo "$PYTHON_GET_PIP_SHA256 *get-pip.py" | sha256sum -c -; \
+	\
+	export PYTHONDONTWRITEBYTECODE=1; \
+	\
+	python get-pip.py \
+		--disable-pip-version-check \
+		--no-cache-dir \
+		--no-compile \
+		"pip==$PYTHON_PIP_VERSION" \
+		"setuptools==$PYTHON_SETUPTOOLS_VERSION" \
+	; \
+	rm -f get-pip.py; \
+	\
+	pip --version

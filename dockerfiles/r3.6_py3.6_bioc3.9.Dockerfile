@@ -1,9 +1,9 @@
-FROM debian:buster
+FROM ubuntu:focal
 
-LABEL org.label-schema.license="MIT" \
-      org.label-schema.vcs-url="https://github.com/data-intuitive/randpy" \
-      org.label-schema.vendor="randpy: R and Python in one container" \
-      maintainer="Robrecht Cannoodt <robrecht@data-intuitive.com>"
+LABEL org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/data-intuitive/ghcr_randpy" \
+      org.opencontainers.image.vendor="randpy: R and Python in one container" \
+      org.opencontainers.image.authors="Robrecht Cannoodt <robrecht@data-intuitive.com>"
 
 #------------------------------------------
 # INSTALL build deps
@@ -14,12 +14,15 @@ LABEL org.label-schema.license="MIT" \
 #------------------------------------------
 
 ## PART 1: https://github.com/docker-library/buildpack-deps/blob/master/debian/buster/curl/Dockerfile
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
 		ca-certificates \
 		curl \
 		netbase \
 		wget \
-	&& rm -rf /var/lib/apt/lists/*
+	; \
+	rm -rf /var/lib/apt/lists/*
 
 RUN set -ex; \
 	if ! command -v gpg > /dev/null; then \
@@ -44,9 +47,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 ## PART 3: https://github.com/docker-library/buildpack-deps/blob/master/debian/buster/Dockerfile
+# prepend apt-get install with DEBIAN_FRONTEND=noninteractive -> make sure debconf doesn't try to prompt (e.g. tzdata on Ubuntu)
 RUN set -ex; \
 	apt-get update; \
-# make sure debconf doesn't try to prompt (e.g. tzdata on Ubuntu)
 	DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends \
 		autoconf \
@@ -616,12 +619,3 @@ RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
   Rscript -e 'BiocManager::install(version="3.9", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
-
-# install anndata. only install miniconda if no custom python was installed.
-RUN if [ `which python` != "/usr/local/bin/python" ]; then \
-    Rscript -e 'reticulate::install_miniconda(); remotes::install_github("rcannood/anndata"); anndata::install_anndata()'; \
-  else \
-    echo "RETICULATE_PYTHON='`which python`'" >> $R_HOME/etc/Renviron.site; \
-    pip install anndata; \
-    Rscript -e 'remotes::install_github("rcannood/anndata")'; \
-  fi
