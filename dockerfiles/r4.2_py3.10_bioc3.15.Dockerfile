@@ -323,5 +323,5 @@ ENV BIOCONDUCTOR_VERSION=$BIOCONDUCTOR_VERSION
 
 # install some bioconductor dependencies
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
-  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
+  Rscript -e 'BiocManager::install(version="3.15", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
