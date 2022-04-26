@@ -196,7 +196,7 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
   && install2.r --error tinytex \
   ## Admin-based install of TinyTeX:
   && wget -qO- \
-    "https://github.com/yihui/tinytex/raw/master/tools/install-unx.sh" | \
+    "https://github.com/yihui/tinytex/raw/main/tools/install-unx.sh" | \
     sh -s - --admin --no-path \
   && mv ~/.TinyTeX /opt/TinyTeX \
   && if /opt/TinyTeX/bin/*/tex -v | grep -q 'TeX Live 2018'; then \

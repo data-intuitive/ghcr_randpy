@@ -304,7 +304,7 @@ RUN wget "https://travis-bin.yihui.name/texlive-local.deb" \
   && install2.r --error tinytex \
   ## Admin-based install of TinyTeX:
   && wget -qO- \
-    "https://github.com/yihui/tinytex/raw/master/tools/install-unx.sh" | \
+    "https://github.com/yihui/tinytex/raw/main/tools/install-unx.sh" | \
     sh -s - --admin --no-path \
   && mv ~/.TinyTeX /opt/TinyTeX \
   && if /opt/TinyTeX/bin/*/tex -v | grep -q 'TeX Live 2018'; then \
@@ -582,7 +582,7 @@ RUN apt-get update \
 # # Install libsbml and xvfb
 RUN cd /tmp \
 	## libsbml
-	&& curl -O https://master.dl.sourceforge.net/project/sbml/libsbml/5.10.2/stable/libSBML-5.10.2-core-src.tar.gz?viasf=1 -o libSBML-5.10.2-core-src.tar.gz? \
+	&& curl -o libSBML-5.10.2-core-src.tar.gz https://master.dl.sourceforge.net/project/sbml/libsbml/5.10.2/stable/libSBML-5.10.2-core-src.tar.gz?viasf=1 \
 	&& tar zxf libSBML-5.10.2-core-src.tar.gz \
 	&& cd libsbml-5.10.2 \
 	&& ./configure --enable-layout \
