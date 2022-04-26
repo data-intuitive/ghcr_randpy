@@ -2,11 +2,11 @@ on:
   push:
     branches:
       - master
+      - main
   pull_request:
     branches:
       - master
-  schedule:
-    - cron: "0 0 * * 1"
+      - main
 
 name: randpy without R
 
@@ -25,6 +25,7 @@ jobs:
           - {file: 'py3.7', extra_tags: ''}
           - {file: 'py3.8', extra_tags: ''}
           - {file: 'py3.9', extra_tags: ''}
+          - {file: 'py3.10', extra_tags: ''}
 
     steps:
       - uses: actions/checkout@v2
@@ -35,17 +36,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
         
-      - name: Login to DockerHub
+      - name: Login to ghcr
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GTHB_PAT }}
       
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           build-args: GITHUB_PAT=${{ secrets.PAT }}
-          tags: dataintuitive/randpy:${{ matrix.config.file }}${{ matrix.config.extra_tags }}
+          tags: ghcr.io/data-intuitive/randpy:${{ matrix.config.file }}${{ matrix.config.extra_tags }}
           file: dockerfiles/${{ matrix.config.file }}.Dockerfile
           push: true

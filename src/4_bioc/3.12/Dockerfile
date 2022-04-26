@@ -1,8 +1,29 @@
 #------------------------------------------
 # INSTALL R
 # Interpreted from bioconductor/bioconductor_docker:3.12
-# https://github.com/Bioconductor/bioconductor_docker/blob/master/Dockerfile
+# https://github.com/Bioconductor/bioconductor_docker/blob/RELEASE_3_12/Dockerfile
 #------------------------------------------
+
+## Set Dockerfile version number
+ARG BIOCONDUCTOR_VERSION=3.12
+
+##### IMPORTANT ########
+## The PATCH version number should be incremented each time
+## there is a change in the Dockerfile.
+ARG BIOCONDUCTOR_PATCH=32
+########################
+ARG BIOCONDUCTOR_DOCKER_VERSION=${BIOCONDUCTOR_VERSION}.${BIOCONDUCTOR_PATCH}
+
+# nuke cache dirs before installing pkgs; tip from Dirk E fixes broken img
+RUN rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
+
+# issues with '/var/lib/dpkg/available' not found
+# this will recreate
+RUN dpkg --clear-avail
+
+# This is to avoid the error
+# 'debconf: unable to initialize frontend: Dialog'
+ENV DEBIAN_FRONTEND noninteractive
 
 # Update apt-get
 RUN apt-get update \
@@ -127,9 +148,9 @@ RUN apt-get update \
 
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
 
-RUN Rscript -e 'install.packages("BiocManager", repos="https://cran.rstudio.com")' && \
-  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
-  Rscript -e 'BiocManager::install("devtools")'
+ADD install.R /tmp/
+
+RUN R -f /tmp/install.R
 
 RUN echo BIOCONDUCTOR_VERSION=${BIOCONDUCTOR_VERSION} >> /usr/local/lib/R/etc/Renviron.site \
 	&& echo BIOCONDUCTOR_DOCKER_VERSION=${BIOCONDUCTOR_DOCKER_VERSION} >> /usr/local/lib/R/etc/Renviron.site \
@@ -141,16 +162,7 @@ ENV LIBSBML_LIBS="-lsbml"
 ENV BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION
 ENV BIOCONDUCTOR_VERSION=$BIOCONDUCTOR_VERSION
 
-# install bioconductor dependencies
+# install some bioconductor dependencies
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
   Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
-
-# install anndata. only install miniconda if no custom python was installed.
-RUN if [ `which python` != "/usr/local/bin/python" ]; then \
-    Rscript -e 'reticulate::install_miniconda(); remotes::install_github("rcannood/anndata"); anndata::install_anndata()'; \
-  else \
-    echo "RETICULATE_PYTHON='`which python`'" >> $R_HOME/etc/Renviron.site; \
-    pip install anndata; \
-    Rscript -e 'remotes::install_github("rcannood/anndata")'; \
-  fi

@@ -16,15 +16,32 @@ for os in $(ls $fol_os); do
       echo >> $out
       cat $fol_py/$py/Dockerfile >> $out
       
-      if [ $r == "4.0" ]; then
-        bioc=3.12
+      if [ $r == "4.2" ]; then
+        bioc=3.15
         out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
         cat $out > $out2
         echo >> $out2
         cat $fol_bioc/$bioc/Dockerfile >> $out2
       fi
+      
+      if [ $r == "4.1" ]; then
+        bioc=3.14
+        out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+        cat $out > $out2
+        echo >> $out2
+        cat $fol_bioc/$bioc/Dockerfile >> $out2
+      fi
+      
+      if [ $r == "4.1" ]; then
+        bioc=3.13
+        out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+        cat $out > $out2
+        echo >> $out2
+        cat $fol_bioc/$bioc/Dockerfile >> $out2
+      fi
+      
       if [ $r == "4.0" ]; then
-        bioc=3.12_workaround
+        bioc=3.12
         out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
         cat $out > $out2
         echo >> $out2
@@ -65,13 +82,6 @@ for os in $(ls $fol_os); do
       
     if [ $r == "4.0" ]; then
       bioc=3.12
-      out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
-      cat $out > $out2
-      echo >> $out2
-      cat $fol_bioc/$bioc/Dockerfile >> $out2
-    fi
-    if [ $r == "4.0" ]; then
-      bioc=3.12_workaround
       out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
       cat $out > $out2
       echo >> $out2

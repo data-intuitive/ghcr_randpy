@@ -1,17 +1,26 @@
 #------------------------------------------
 # INSTALL R
 # Interpreted from bioconductor/bioconductor_docker:3.10
-# https://github.com/Bioconductor/bioconductor_docker/blob/master/Dockerfile
+# https://github.com/Bioconductor/bioconductor_docker/blob/RELEASE_3_10/Dockerfile
 #------------------------------------------
 
+## Set Dockerfile version number
+## This parameter should be incremented each time there is a change in the Dockerfile
+ARG BIOCONDUCTOR_DOCKER_VERSION=3.10.3
+
+RUN echo BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION >> /etc/environment \
+       && echo BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION >> /root/.bashrc
+
 # nuke cache dirs before installing pkgs; tip from Dirk E fixes broken img
-# RUN rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
+RUN rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
 
-# issues with '/var/lib/dpkg/available' not found; this will recreate
-# RUN dpkg --clear-avail
+# issues with '/var/lib/dpkg/available' not found
+# this will recreate
+RUN dpkg --clear-avail
 
-# This is to avoid the error 'debconf: unable to initialize frontend: Dialog'
-# ENV DEBIAN_FRONTEND noninteractive
+# This is to avoid the error
+# 'debconf: unable to initialize frontend: Dialog'
+ENV DEBIAN_FRONTEND noninteractive
 
 # Update apt-get
 RUN apt-get update \
@@ -20,11 +29,12 @@ RUN apt-get update \
 	## Basic deps
 	gdb \
 	libxml2-dev \
-	python3-pip \
+	python-pip \
 	libz-dev \
 	liblzma-dev \
 	libbz2-dev \
 	libpng-dev \
+	libmariadb-dev \
 	## sys deps from bioc_full
 	pkg-config \
 	fortran77-compiler \
@@ -32,16 +42,16 @@ RUN apt-get update \
 	automake \
 	curl \
 	## This section installs libraries
-	libpcre2-dev \
+	libpng-dev \
 	libnetcdf-dev \
 	libhdf5-serial-dev \
 	libfftw3-dev \
 	libopenbabel-dev \
 	libopenmpi-dev \
+	libexempi8 \
 	libxt-dev \
-	libudunits2-dev \
-	libgeos-dev \
-	libproj-dev \
+	libgdal-dev \
+	libjpeg62-turbo-dev \
 	libcairo2-dev \
 	libtiff5-dev \
 	libreadline-dev \
@@ -59,8 +69,10 @@ RUN apt-get update \
 	libv8-dev \
 	libgtkmm-2.4-dev \
 	libmpfr-dev \
+	libudunits2-dev \
 	libmodule-build-perl \
 	libapparmor-dev \
+	libgeos-dev \
 	libprotoc-dev \
 	librdf0-dev \
 	libmagick++-dev \
@@ -76,11 +88,6 @@ RUN apt-get update \
 	libdbi-perl \
 	libdbd-mysql-perl \
 	libxml-simple-perl \
-	# libmysqlclient-dev \
-	default-libmysqlclient-dev \
-	libgdal-dev \
-	## new libs
-	libglpk-dev \
 	## Databases and other software
 	sqlite \
 	openmpi-bin \
@@ -104,36 +111,18 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 ## Python installations
-# python 2?!
-# RUN apt-get update \
-# 	&& apt-get install -y software-properties-common \
-# 	&& add-apt-repository universe \
-# 	&& apt-get update \
-# 	&& apt-get -y --no-install-recommends install python2 python-dev \
-# 	&& curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py \
-# 	&& python2 get-pip.py \
-# 	&& pip2 install wheel \
-# 	## Install sklearn and pandas on python
-# 	&& pip2 install sklearn \
-# 	pandas \
-# 	pyyaml \
-# 	cwltool \
-# 	&& apt-get clean \
-# 	&& rm -rf /var/lib/apt/lists/* \
-# 	&& rm -rf get-pip.py
-
-## FIXME
-## These two libraries don't install in the above section--WHY?
 RUN apt-get update \
-	&& apt-get -y --no-install-recommends install \
-	libmariadb-dev-compat \
-	libjpeg-dev \
-	# libjpeg-turbo8-dev \
-	# libjpeg8-dev \
+	&& apt-get -y --no-install-recommends install python-dev \
+	&& pip install wheel \
+	## Install sklearn and pandas on python
+	&& pip install sklearn \
+	pandas \
+	pyyaml \
+	cwltool \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-# # Install libsbml and xvfb
+# Install libsbml and xvfb
 RUN cd /tmp \
 	## libsbml
 	&& curl -O https://s3.amazonaws.com/linux-provisioning/libSBML-5.10.2-core-src.tar.gz \
@@ -142,6 +131,11 @@ RUN cd /tmp \
 	&& ./configure --enable-layout \
 	&& make \
 	&& make install \
+	## xvfb install
+	&& cd /tmp \
+	&& curl -SL https://github.com/just-containers/s6-overlay/releases/download/v1.21.8.0/s6-overlay-amd64.tar.gz | tar -xzC / \
+	&& apt-get update && apt-get install -y --no-install-recommends xvfb \
+	&& mkdir -p /etc/services.d/xvfb/ \
 	## Clean libsbml, and tar.gz files
 	&& rm -rf /tmp/libsbml-5.10.2 \
 	&& rm -rf /tmp/libSBML-5.10.2-core-src.tar.gz \
@@ -149,18 +143,12 @@ RUN cd /tmp \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
+COPY ./deps/xvfb_init /etc/services.d/xvfb/run
+
+RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site \
+	&& echo "options(defaultPackages=c(getOption('defaultPackages'),'BiocManager'))" >> /usr/local/lib/R/etc/Rprofile.site
   
 # install bioconductor dependencies
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
   Rscript -e 'BiocManager::install(version="3.10", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
-
-# install anndata. only install miniconda if no custom python was installed.
-RUN if [ `which python` != "/usr/local/bin/python" ]; then \
-    Rscript -e 'reticulate::install_miniconda(); remotes::install_github("rcannood/anndata"); anndata::install_anndata()'; \
-  else \
-    echo "RETICULATE_PYTHON='`which python`'" >> $R_HOME/etc/Renviron.site; \
-    pip install anndata; \
-    Rscript -e 'remotes::install_github("rcannood/anndata")'; \
-  fi

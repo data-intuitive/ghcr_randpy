@@ -1,8 +1,36 @@
 #------------------------------------------
 # INSTALL R
 # Interpreted from bioconductor/bioconductor_docker:3.12
-# https://github.com/Bioconductor/bioconductor_docker/blob/master/Dockerfile
+# https://github.com/Bioconductor/bioconductor_docker/blob/RELEASE_3_14/Dockerfile
 #------------------------------------------
+
+## Set Dockerfile version number
+ARG BIOCONDUCTOR_VERSION=3.14
+
+##### IMPORTANT ########
+## The PATCH version number should be incremented each time
+## there is a change in the Dockerfile.
+ARG BIOCONDUCTOR_PATCH=34
+ARG BIOCONDUCTOR_DOCKER_VERSION=${BIOCONDUCTOR_VERSION}.${BIOCONDUCTOR_PATCH}
+
+LABEL name="bioconductor/bioconductor_docker" \
+      version=$BIOCONDUCTOR_DOCKER_VERSION \
+      url="https://github.com/Bioconductor/bioconductor_docker" \
+      vendor="Bioconductor Project" \
+      maintainer="maintainer@bioconductor.org" \
+      description="Bioconductor docker image with system dependencies to install all packages." \
+      license="Artistic-2.0"
+
+# nuke cache dirs before installing pkgs; tip from Dirk E fixes broken img
+RUN rm -f /var/lib/dpkg/available && rm -rf  /var/cache/apt/*
+
+# issues with '/var/lib/dpkg/available' not found
+# this will recreate
+RUN dpkg --clear-avail
+
+# This is to avoid the error
+# 'debconf: unable to initialize frontend: Dialog'
+ENV DEBIAN_FRONTEND noninteractive
 
 # Update apt-get
 RUN apt-get update \
@@ -15,8 +43,8 @@ RUN apt-get update \
 	libz-dev \
 	liblzma-dev \
 	libbz2-dev \
-	libgit2-dev \
 	libpng-dev \
+	libgit2-dev \
 	## sys deps from bioc_full
 	pkg-config \
 	fortran77-compiler \
@@ -68,11 +96,9 @@ RUN apt-get update \
 	libdbi-perl \
 	libdbd-mysql-perl \
 	libxml-simple-perl \
-	libmysqlclient-dev \
-	default-libmysqlclient-dev \
-	libgdal-dev \
 	## new libs
 	libglpk-dev \
+	libeigen3-dev \
 	## Databases and other software
 	sqlite \
 	openmpi-bin \
@@ -91,28 +117,18 @@ RUN apt-get update \
 	## Additional resources
 	xfonts-100dpi \
 	xfonts-75dpi \
-	 biber \
+	biber \
 	libsbml5-dev \
+	libzmq3-dev \
+	## python3 dev
+	python3-dev \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
 ## Python installations
-RUN apt-get update \
-	&& apt-get install -y software-properties-common \
-	&& add-apt-repository universe \
-	&& apt-get update \
-	&& apt-get -y --no-install-recommends install python2 python-dev \
-	&& curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py \
-	&& python2 get-pip.py \
-	&& pip2 install wheel \
-	## Install sklearn and pandas on python
-	&& pip2 install sklearn \
+RUN pip3 install sklearn \
 	pandas \
-	pyyaml \
-	cwltool \
-	&& apt-get clean \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf get-pip.py
+	pyyaml
 
 ## FIXME
 ## These two libraries don't install in the above section--WHY?
@@ -122,15 +138,28 @@ RUN apt-get update \
 	libjpeg-dev \
 	libjpeg-turbo8-dev \
 	libjpeg8-dev \
+	libavfilter-dev \
+	libfuse-dev \
+	mono-runtime \
+        ocl-icd-opencl-dev \
+        cmake \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
+
+RUN apt-get update \
+        && apt-get -y --no-install-recommends install \
+        libgdal-dev \
+        default-libmysqlclient-dev \
+        libmysqlclient-dev \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
+## Add host-site-library
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
 
-RUN Rscript -e 'install.packages("BiocManager", repos="https://cran.rstudio.com")' && \
-  Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
-  Rscript -e 'BiocManager::install("devtools")'
-
+# Variables in Renviron.site are made available inside of R.
+# Add libsbml CFLAGS
 RUN echo BIOCONDUCTOR_VERSION=${BIOCONDUCTOR_VERSION} >> /usr/local/lib/R/etc/Renviron.site \
 	&& echo BIOCONDUCTOR_DOCKER_VERSION=${BIOCONDUCTOR_DOCKER_VERSION} >> /usr/local/lib/R/etc/Renviron.site \
 	&& echo 'LIBSBML_CFLAGS="-I/usr/include"' >> /usr/local/lib/R/etc/Renviron.site \
@@ -141,21 +170,7 @@ ENV LIBSBML_LIBS="-lsbml"
 ENV BIOCONDUCTOR_DOCKER_VERSION=$BIOCONDUCTOR_DOCKER_VERSION
 ENV BIOCONDUCTOR_VERSION=$BIOCONDUCTOR_VERSION
 
-# temporary workaround for unreachable bioconductor.org issue
-RUN echo 'options(BioC_mirror = "https://bioconductor.statistik.tu-dortmund.de")' >> /usr/local/lib/R/etc/Rprofile.site
-COPY bioc_config.yaml /bioc_config.yaml
-RUN echo 'options(BIOCONDUCTOR_CONFIG_FILE = "file:///bioc_config.yaml")' >> /usr/local/lib/R/etc/Rprofile.site
-
-# install bioconductor dependencies
+# install some bioconductor dependencies
 RUN Rscript -e 'remotes::install_cran(c("BiocManager", "Seurat", "rmarkdown", "reticulate", "pheatmap", "hdf5r"))' && \
   Rscript -e 'BiocManager::install(version="3.12", update=TRUE, ask=FALSE)' && \
   Rscript -e 'BiocManager::install(c("SingleCellExperiment", "GenomicFeatures", "rtracklayer", "Rsamtools", "scater"))'
-
-# install anndata. only install miniconda if no custom python was installed.
-RUN if [ `which python` != "/usr/local/bin/python" ]; then \
-    Rscript -e 'reticulate::install_miniconda(); remotes::install_github("rcannood/anndata"); anndata::install_anndata()'; \
-  else \
-    echo "RETICULATE_PYTHON='`which python`'" >> $R_HOME/etc/Renviron.site; \
-    pip install anndata; \
-    Rscript -e 'remotes::install_github("rcannood/anndata")'; \
-  fi
