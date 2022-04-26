@@ -419,8 +419,6 @@ RUN apt-get update \
 
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site
 
-ADD install.R /tmp/
-
 RUN R -f /tmp/install.R
 
 RUN echo BIOCONDUCTOR_VERSION=${BIOCONDUCTOR_VERSION} >> /usr/local/lib/R/etc/Renviron.site \

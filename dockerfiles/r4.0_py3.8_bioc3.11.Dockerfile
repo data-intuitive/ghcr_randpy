@@ -303,7 +303,7 @@ RUN apt-get update \
 	## Basic deps
 	gdb \
 	libxml2-dev \
-	python-pip \
+	python3-pip \
 	libz-dev \
 	liblzma-dev \
 	libbz2-dev \
@@ -409,7 +409,7 @@ RUN apt-get update \
 # Install libsbml and xvfb
 RUN cd /tmp \
 	## libsbml
-	&& curl -O https://s3.amazonaws.com/linux-provisioning/libSBML-5.10.2-core-src.tar.gz \
+	&& curl -O https://master.dl.sourceforge.net/project/sbml/libsbml/5.10.2/stable/libSBML-5.10.2-core-src.tar.gz?viasf=1 -o libSBML-5.10.2-core-src.tar.gz? \
 	&& tar zxf libSBML-5.10.2-core-src.tar.gz \
 	&& cd libsbml-5.10.2 \
 	&& ./configure --enable-layout \
