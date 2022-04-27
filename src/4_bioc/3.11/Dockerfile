@@ -143,8 +143,9 @@ RUN cd /tmp \
 	&& make install \
 	## xvfb install
 	&& cd /tmp \
-	&& curl -SL https://github.com/just-containers/s6-overlay/releases/download/v1.21.8.0/s6-overlay-amd64.tar.gz | tar -xzC / \
-	&& apt-get update && apt-get install -y --no-install-recommends xvfb \
+	# disable s6
+	# && curl -SL https://github.com/just-containers/s6-overlay/releases/download/v1.21.8.0/s6-overlay-amd64.tar.gz | tar -xzC / \
+	&& apt-get update && apt-get install -y --no-install-recommends --allow-unauthenticated xvfb \
 	&& mkdir -p /etc/services.d/xvfb/ \
 	## Clean libsbml, and tar.gz files
 	&& rm -rf /tmp/libsbml-5.10.2 \
@@ -153,7 +154,8 @@ RUN cd /tmp \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY ./deps/xvfb_init /etc/services.d/xvfb/run
+RUN curl -o /etc/services.d/xvfb/run https://raw.githubusercontent.com/Bioconductor/bioconductor_docker/RELEASE_3_11/deps/xvfb_init \
+    && chmod +x /etc/services.d/xvfb/run
 
 RUN echo "R_LIBS=/usr/local/lib/R/host-site-library:\${R_LIBS}" > /usr/local/lib/R/etc/Renviron.site \
 	&& echo "options(defaultPackages=c(getOption('defaultPackages'),'BiocManager'))" >> /usr/local/lib/R/etc/Rprofile.site

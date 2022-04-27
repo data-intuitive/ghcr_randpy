@@ -40,20 +40,20 @@ for os in $(ls $fol_os); do
         cat $fol_bioc/$bioc/Dockerfile >> $out2
       fi
       
-      if [ $r == "4.0" ]; then
-        bioc=3.12
-        out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
-        cat $out > $out2
-        echo >> $out2
-        cat $fol_bioc/$bioc/Dockerfile >> $out2
-      fi
-      if [ $r == "4.0" ]; then
-        bioc=3.11
-        out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
-        cat $out > $out2
-        echo >> $out2
-        cat $fol_bioc/$bioc/Dockerfile >> $out2
-      fi
+      # if [ $r == "4.0" ]; then
+      #   bioc=3.12
+      #   out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+      #   cat $out > $out2
+      #   echo >> $out2
+      #   cat $fol_bioc/$bioc/Dockerfile >> $out2
+      # fi
+      # if [ $r == "4.0" ]; then
+      #   bioc=3.11
+      #   out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+      #   cat $out > $out2
+      #   echo >> $out2
+      #   cat $fol_bioc/$bioc/Dockerfile >> $out2
+      # fi
       if [ $r == "3.6" ]; then
         bioc=3.10
         out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
@@ -101,20 +101,20 @@ for os in $(ls $fol_os); do
       echo >> $out2
       cat $fol_bioc/$bioc/Dockerfile >> $out2
     fi
-    if [ $r == "4.0" ]; then
-      bioc=3.12
-      out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
-      cat $out > $out2
-      echo >> $out2
-      cat $fol_bioc/$bioc/Dockerfile >> $out2
-    fi
-    if [ $r == "4.0" ]; then
-      bioc=3.11
-      out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
-      cat $out > $out2
-      echo >> $out2
-      cat $fol_bioc/$bioc/Dockerfile >> $out2
-    fi
+    # if [ $r == "4.0" ]; then
+    #   bioc=3.12
+    #   out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+    #   cat $out > $out2
+    #   echo >> $out2
+    #   cat $fol_bioc/$bioc/Dockerfile >> $out2
+    # fi
+    # if [ $r == "4.0" ]; then
+    #   bioc=3.11
+    #   out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
+    #   cat $out > $out2
+    #   echo >> $out2
+    #   cat $fol_bioc/$bioc/Dockerfile >> $out2
+    # fi
     if [ $r == "3.6" ]; then
       bioc=3.10
       out2=${out%.Dockerfile}_bioc$bioc.Dockerfile
