@@ -48,6 +48,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           build-args: GITHUB_PAT=${{ secrets.PAT }}
+          platforms: linux/amd64,linux/arm64
           tags: ghcr.io/data-intuitive/randpy:${{ matrix.config.file }}${{ matrix.config.extra_tags }}
           file: dockerfiles/${{ matrix.config.file }}.Dockerfile
           push: true
